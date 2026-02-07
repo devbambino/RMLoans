@@ -199,12 +199,14 @@ async function refreshAllBalances() {
         // USDC Balance
         const usdc = new ethers.Contract(CONFIG.usdc, ERC20_ABI, provider);
         const usdcBalance = await usdc.balanceOf(userAddress);
+        console.log("vault usdc balance:",usdcBalance);
         document.getElementById("usdcBalance").textContent = 
             ethers.formatUnits(usdcBalance, 6).substring(0, 10);
 
         // vUSDC Balance
         const vUsdc = new ethers.Contract(CONFIG.vUSDC, ERC20_ABI, provider);
         const vusdcBalance = await vUsdc.balanceOf(userAddress);
+        console.log("vault vusdcBalance balance:",vusdcBalance);
         document.getElementById("vusdcBalance").textContent = 
             ethers.formatUnits(vusdcBalance, 6).substring(0, 10);
 
