@@ -17,6 +17,7 @@ mkdir -p privy-next-starter && curl -L https://github.com/privy-io/privy-example
 ### 2. Install Dependencies
 
 ```bash
+cd next-app
 pnpm install
 ```
 

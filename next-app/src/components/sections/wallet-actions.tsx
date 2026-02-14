@@ -203,8 +203,9 @@ const WalletActions = () => {
     }
     try {
       const transaction = await sendTransactionEvm(
-        { to: "0xE3070d3e4309afA3bC9a6b057685743CF42da77C", value: 10000 },
-        { address: selectedWallet.address }
+        { to: "0xeC7d1851289AC30e01baA622A5A951469C5cE140", value: 10000 },
+        { address: selectedWallet.address},
+        
       );
       const result =
         typeof transaction === "string"
