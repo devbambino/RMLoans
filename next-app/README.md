@@ -8,20 +8,14 @@ This example showcases how to get started using Privy's React SDK inside a Next.
 
 ## Getting Started
 
-### 1. Clone the Project
-
-```bash
-mkdir -p privy-next-starter && curl -L https://github.com/privy-io/privy-examples/archive/main.tar.gz | tar -xz --strip=2 -C privy-next-starter examples-main/privy-next-starter && cd privy-next-starter
-```
-
-### 2. Install Dependencies
+### 1. Install Dependencies
 
 ```bash
 cd next-app
 pnpm install
 ```
 
-### 3. Configure Environment
+### 2. Configure Environment
 
 Copy the example environment file and configure your Privy app credentials:
 
@@ -39,7 +33,7 @@ NEXT_PUBLIC_PRIVY_SIGNER_ID=your_signer_id_here
 
 **Important:** Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. Get your credentials from the [Privy Dashboard](https://dashboard.privy.io).
 
-### 4. Start Development Server
+### 3. Start Development Server
 
 ```bash
 pnpm dev
