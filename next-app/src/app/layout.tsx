@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import Providers from "@/providers/providers";
+import Navbar from "@/components/navbar";
 
 const inter = localFont({
   src: "../../public/fonts/InterVariable.ttf",
@@ -28,9 +29,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${abcFavorit.variable} antialiased`}
+        className={`${inter.variable} ${abcFavorit.variable} bg-black h-full antialiased`}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          <Navbar/>
+          {children}
+          </Providers>
       </body>
     </html>
   );

@@ -1,72 +1,23 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import Image from "next/image";
 import { ToastContainer } from "react-toastify";
 
 import { FullScreenLoader } from "@/components/ui/fullscreen-loader";
-import { Header } from "@/components/ui/header";
-import CreateAWallet from "@/components/sections/create-a-wallet";
-import UserObject from "@/components/sections/user-object";
-import { ArrowLeftIcon } from "@heroicons/react/16/solid";
-import FundWallet from "@/components/sections/fund-wallet";
-import LinkAccounts from "@/components/sections/link-accounts";
-import UnlinkAccounts from "@/components/sections/unlink-accounts";
-import WalletActions from "@/components/sections/wallet-actions";
-import Signers from "@/components/sections/signers";
-import WalletManagement from "@/components/sections/wallet-management";
-import MFA from "@/components/sections/mfa";
-
 function Home() {
-  const { ready, authenticated, logout, login } = usePrivy();
+  const { ready, authenticated, login } = usePrivy();
   if (!ready) {
     return <FullScreenLoader />;
   }
 
   return (
-    <div className={`${authenticated ? 'bg-[#E0E7FF66] md:max-h-[100vh] md:overflow-hidden' : 'bg-transparent h-screen overflow-hidden'}`}>
-      <Header authenticated={authenticated} />
+    <div className={`bg-gray-950 h-screen`}>
       {authenticated ? (
-        <section className="w-full flex flex-col md:flex-row h-screen pt-[60px]">
-          <div className="flex-grow overflow-y-auto h-full p-4 pl-8">
-            <button className="button" onClick={logout}>
-              <ArrowLeftIcon className="h-4 w-4" strokeWidth={2} /> Logout
-            </button>
-
-            <div>
-              <CreateAWallet />
-              <FundWallet />
-              <LinkAccounts />
-              <UnlinkAccounts />
-              <WalletActions />
-              <Signers />
-              <WalletManagement />
-              <MFA />
-            </div>
-          </div>
-          <UserObject />
-        </section>
+        <></>
       ) : (
-        <section className="w-full flex flex-row justify-center items-center h-screen relative">
-          <Image
-            src="./BG.svg"
-            alt="Background"
-            fill
-            style={{ objectFit: "cover", zIndex: 0 }}
-            priority
-          />
-          <div className="z-10 flex flex-col items-center justify-center w-full h-full">
-          <div className="flex h-10 items-center justify-center rounded-[20px] border border-white px-6 text-lg text-white font-abc-favorit">
-            Next.js Demo
-          </div>
-        <div className="text-center mt-4 text-white text-7xl font-medium font-abc-favorit leading-[81.60px]">
-          Starter repo
-        </div>
-            <div className="text-center text-white text-xl font-normal leading-loose mt-8">
-              Get started developing with Privy using our Next.js starter repo
-            </div>
-            <button
-              className="bg-white text-brand-off-black mt-15 w-full max-w-md rounded-full px-4 py-2 hover:bg-gray-100 lg:px-8 lg:py-4 lg:text-xl"
+        <section className="flex h-screen bg-transparent items-center justify-center">
+        <button
+              className="bg-gray-100 cursor-pointer mt-15 w-full max-w-md rounded-full px-4 py-2 font-bold hover:bg-gray-300 transition-colors duration-200 lg:px-8 lg:py-4 lg:text-xl"
               onClick={() => {
                 login();
                 setTimeout(() => {
@@ -76,7 +27,6 @@ function Home() {
             >
               Get started
             </button>
-          </div>
         </section>
       )}
   
