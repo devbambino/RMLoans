@@ -31,13 +31,13 @@ export const MARKET_IDS = {
 
 // Morpho Blue Market Params Tuple
 // [loanToken, collateralToken, oracle, irm, lltv]
-export const MXNB_MARKET_PARAMS: [string, string, string, string, bigint] = [
-    CONTRACT_ADDRESSES.mockMXNB,        // loanToken
-    CONTRACT_ADDRESSES.wmUSDC,          // collateralToken
-    CONTRACT_ADDRESSES.wmusdcMxnbOracle, // oracle
-    "0x46415998764C29aB2a25CbeA6254146D50D22687", // irm
-    ethers.parseEther("0.77"),          // lltv (77%)
-];
+export const MXNB_MARKET_PARAMS = {
+    loanToken: CONTRACT_ADDRESSES.mockMXNB,
+    collateralToken: CONTRACT_ADDRESSES.wmUSDC,
+    oracle: CONTRACT_ADDRESSES.wmusdcMxnbOracle,
+    irm: "0x46415998764C29aB2a25CbeA6254146D50D22687",
+    lltv: ethers.parseEther("0.77")
+};
 
 // ABIs
 export const ERC20_ABI = [
@@ -57,6 +57,7 @@ export const VAULT_ABI = [
     "function redeem(uint256 shares, address receiver, address owner) external returns (uint256)",
     "function balanceOf(address account) external view returns (uint256)",
     "function approve(address spender, uint256 amount) external returns (bool)",
+    "function allowance(address owner, address spender) external view returns (uint256)",
     "function asset() external view returns (address)",
     "function convertToShares(uint256 assets) external view returns (uint256)",
     "function convertToAssets(uint256 shares) external view returns (uint256)",
@@ -67,14 +68,15 @@ export const WMEMORY_ABI = [
     "function redeem(uint256 shares, address receiver, address owner) external returns (uint256)",
     "function balanceOf(address account) external view returns (uint256)",
     "function approve(address spender, uint256 amount) external returns (bool)",
+    "function allowance(address owner, address spender) external view returns (uint256)",
 ];
 
 export const MORPHO_ABI = [
-    "function supplyCollateral(tuple(address,address,address,address,uint256) marketParams, uint256 amount, address onBehalf, bytes data) external",
-    "function withdrawCollateral(tuple(address,address,address,address,uint256) marketParams, uint256 amount, address onBehalf, address receiver) external",
-    "function borrow(tuple(address,address,address,address,uint256) marketParams, uint256 assets, uint256 shares, address onBehalf, address receiver) external returns (uint256, uint256)",
-    "function repay(tuple(address,address,address,address,uint256) marketParams, uint256 assets, uint256 shares, address onBehalf, bytes data) external returns (uint256, uint256)",
-    "function position(bytes32 id, address user) external view returns (tuple(uint256,uint256,uint256))",
+    "function supplyCollateral(tuple(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv) marketParams, uint256 amount, address onBehalf, bytes data) external",
+    "function withdrawCollateral(tuple(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv) marketParams, uint256 amount, address onBehalf, address receiver) external",
+    "function borrow(tuple(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv) marketParams, uint256 assets, uint256 shares, address onBehalf, address receiver) external returns (uint256, uint256)",
+    "function repay(tuple(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv) marketParams, uint256 assets, uint256 shares, address onBehalf, bytes data) external returns (uint256, uint256)",
+    "function position(bytes32 id, address user) external view returns (tuple(uint256 supplyShares, uint256 borrowShares, uint256 collateral))",
 ];
 
 export const ORACLE_ABI = [
