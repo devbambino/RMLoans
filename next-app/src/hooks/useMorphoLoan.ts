@@ -25,6 +25,20 @@ export const useMorphoLoan = () => {
     const [usdcBalance, setUsdcBalance] = useState<string>("0.00");
     const [mxnbBalance, setMxnbBalance] = useState<string>("0.00");
     const [collateralBalance, setCollateralBalance] = useState<string>("0.00");
+    const [borrowBalance, setBorrowBalance] = useState<string>("0.00");
+    const [marketLiquidity, setMarketLiquidity] = useState<string>("0");
+    const [marketAPR, setMarketAPR] = useState<string>("0.00");
+    const [totalRepaidAmount, setTotalRepaidAmount] = useState<string | null>(null);
+    const [oraclePrice, setOraclePrice] = useState<bigint>(0n);
+
+    // Helper: Format with max 3 decimals
+    const formatBalance = (val: bigint, decimals: number) => {
+        const formatted = ethers.formatUnits(val, decimals);
+        // Truncate to 3 decimals without rounding up
+        const [integer, fraction] = formatted.split(".");
+        if (!fraction) return integer;
+        return `${integer}.${fraction.substring(0, 3)}`;
+    };
 
     // Helper to get signer
     const getSigner = useCallback(async () => {
@@ -46,12 +60,12 @@ export const useMorphoLoan = () => {
 
             const usdcContract = new ethers.Contract(CONTRACT_ADDRESSES.usdc, ERC20_ABI, signer);
             const bal = await usdcContract.balanceOf(userAddress);
-            setUsdcBalance(ethers.formatUnits(bal, USDC_DECIMALS));
+            setUsdcBalance(formatBalance(bal, USDC_DECIMALS));
 
             // MXNB Balance
             const mxnbContract = new ethers.Contract(CONTRACT_ADDRESSES.mockMXNB, ERC20_ABI, signer);
             const mxnbBal = await mxnbContract.balanceOf(userAddress);
-            setMxnbBalance(ethers.formatUnits(mxnbBal, MXNB_DECIMALS));
+            setMxnbBalance(formatBalance(mxnbBal, MXNB_DECIMALS));
 
             // Collateral Balance (Morpho Blue Position)
             // Calculate Market ID
@@ -70,7 +84,38 @@ export const useMorphoLoan = () => {
             const morpho = new ethers.Contract(CONTRACT_ADDRESSES.morphoBlue, MORPHO_ABI, signer);
             const position = await morpho.position(marketId, userAddress);
             // position: [supplyShares, borrowShares, collateral]
-            setCollateralBalance(ethers.formatUnits(position[2], USDC_DECIMALS));
+
+            // Market Data
+            const marketData = await morpho.market(marketId);
+
+            // Available Liquidity = totalSupplyAssets - totalBorrowAssets
+            const totalSupplyAssets = BigInt(marketData[0]);
+            const totalBorrowAssets = BigInt(marketData[2]);
+
+            const liquidityAssets = totalSupplyAssets - totalBorrowAssets;
+
+            // Borrow Balance
+            // Matching POC logic: Display borrow shares directly formatted with 12 decimals
+            setBorrowBalance(formatBalance(position[1], 12));
+            setCollateralBalance(formatBalance(position[2], 18)); // WmUSDC is 18 decimals
+
+            // Format Liquidity: Logic check - ensure non-negative
+            const safeLiquidity = liquidityAssets > 0n ? liquidityAssets : 0n;
+            setMarketLiquidity(formatBalance(safeLiquidity, MXNB_DECIMALS));
+
+            // Oracle Price
+            // ABI needs to be minimal or just use raw call if not in ABI list, but we have ORACLE_ABI from file view (we need to import it or define it locally if not imported)
+            // CONTRACTS file had ORACLE_ABI. 
+            // We need to import ORACLE_ABI at top of file, but since I am editing the middle block, I assume it is imported or I'll patch imports later? 
+            // Wait, looking at imports in ViewFile, ORACLE_ABI was NOT imported. I need to fix imports too.
+            // For now, I will use a local minimal ABI in the hook or assume I'll fix imports. 
+            // Better to add ORACLE_ABI to imports in a separate step or just use inline ABI here.
+            const oracle = new ethers.Contract(MXNB_MARKET_PARAMS.oracle, ["function price() external view returns (uint256)"], signer);
+            const price = await oracle.price();
+            setOraclePrice(price);
+
+            // Static APR as requested
+            setMarketAPR("0.00");
 
         } catch (err) {
             console.error("Error refreshing data:", err);
@@ -97,10 +142,58 @@ export const useMorphoLoan = () => {
 
     const getSimulatedDeposit = (borrowAmountMXNB: string): string => {
         if (!borrowAmountMXNB || parseFloat(borrowAmountMXNB) <= 0) return "0";
-        const amount = parseFloat(borrowAmountMXNB);
-        const priceEstimate = 19.5;
-        const required = amount / (TARGET_LTV * priceEstimate);
-        return (required * 1.25).toFixed(2);
+        if (oraclePrice === 0n) {
+            // Fallback if oracle not loaded: use conservative estimate
+            // 50 MXNB / ~18 = 2.77. 0.77 LLTV -> 3.6 required.
+            // Let's use 15 as a safe buffer price if 0.
+            const amount = parseFloat(borrowAmountMXNB);
+            const safePrice = 15.0; // Conservative lower bound price
+            const required = amount / (TARGET_LTV * safePrice);
+            return (required * 1.1).toFixed(2);
+        }
+
+        try {
+            const borrowAssets = ethers.parseUnits(borrowAmountMXNB, MXNB_DECIMALS);
+            // Formula: Required Collateral = (Borrow * 10^36) / (Price * LLTV) * ScaleFactors?
+            // MaxBorrow = (Collateral * Price * LLTV) / 10^36 / 10^18.
+            // Collateral = (Borrow * 10^54) / (Price * LLTV).
+
+            // We want a safe buffer. Target LTV = 0.75. LLTV = 0.77.
+            // Let's calculate using TARGET_LTV (0.75) effectively:
+            // Instead of LLTV in formula, use TargetLTV_WAD.
+            const TARGET_LTV_WAD = ethers.parseEther(TARGET_LTV.toString());
+
+            const numerator = borrowAssets * (10n ** 54n); // 6 + 54 = 60
+            const denominator = oraclePrice * TARGET_LTV_WAD; // 24-ish + 18 = 42? Depends on Price scale.
+
+            // Price scale check: 
+            // 1 WmUSDC (10^18) = 20 MXNB (20*10^6).
+            // Price = (20*10^6 * 10^36) / 10^18 = 20*10^24.
+            // Denom = 10^24 * 10^18 = 10^42.
+            // Result = 10^60 / 10^42 = 10^18. (Correct decimals for WmUSDC).
+
+            const requiredCollateralWmUSDC = numerator / denominator;
+
+            // Convert to USDC (6 decimals). WmUSDC (18) -> USDC (6). Divide by 10^12.
+            // And add a safety buffer for share price differences (1 mUSDC >= 1 USDC) and potential price moves.
+            // Although we used TargetLTV, let's add 5% extra buffer on the USDC amount to be super safe against share/asset conversion rates.
+            // Actually mUSDC price > 1 USDC. So 1 USDC gives < 1 mUSDC.
+            // So we need MORE USDC to get the same mUSDC/WmUSDC amount.
+            // mUSDC to Assets rate is usually close to 1 but > 1. 
+            // If we need 1 WmUSDC, we need 1 mUSDC. 
+            // To get 1 mUSDC, we need `convertToAssets(1)` USDC.
+            // Since we can't easily call convertToAssets here synchronously, we multiply by 1.1 (10% buffer).
+
+            const requiredUSDC = requiredCollateralWmUSDC / (10n ** 12n);
+
+            // 1.1 buffer
+            const withBuffer = requiredUSDC * 110n / 100n;
+
+            return ethers.formatUnits(withBuffer, USDC_DECIMALS); // 6 decimals
+        } catch (e) {
+            console.error("Error calculating deposit:", e);
+            return "0";
+        }
     };
 
     // Helper: Wait for allowance to propagate
@@ -239,8 +332,11 @@ export const useMorphoLoan = () => {
 
             // Fresh Balance Read
             const currentWmUSDCBalance = await wmUSDC.balanceOf(userAddress);
+            if (currentWmUSDCBalance <= 0n) {
+                throw new Error("Cannot supply 0 collateral. WmUSDC balance is 0.");
+            }
 
-            // Construct Tuple Array explicitly to allow Ethers v6 to parse correctly if object fails
+            // Construct Tuple Array explicitly
             const MXNB_MARKET_PARAMS_ARRAY = [
                 MXNB_MARKET_PARAMS.loanToken,
                 MXNB_MARKET_PARAMS.collateralToken,
@@ -249,14 +345,33 @@ export const useMorphoLoan = () => {
                 MXNB_MARKET_PARAMS.lltv
             ];
 
-            console.log("Supply Collateral Params:", MXNB_MARKET_PARAMS_ARRAY);
+            // Debug Logs requested by User
+            console.log("--- DEBUG PRE-SUPPLY ---");
             console.log("Supply Amount:", currentWmUSDCBalance.toString());
+            console.log("Market Params:", JSON.stringify(MXNB_MARKET_PARAMS_ARRAY, (key, value) =>
+                typeof value === 'bigint' ? value.toString() : value
+            ));
 
-            const tx6 = await morpho.supplyCollateral(MXNB_MARKET_PARAMS_ARRAY, currentWmUSDCBalance, userAddress, "0x", { gasLimit: MANUAL_GAS_LIMIT });
+            // Verify Allowance specifically for Morpho Blue
+            const finalAllowance = await wmUSDC.allowance(userAddress, CONTRACT_ADDRESSES.morphoBlue);
+            console.log("Final Allowance for Morpho:", finalAllowance.toString());
 
+            if (finalAllowance < currentWmUSDCBalance) {
+                console.warn("Allowance mismatch detected! Attempting emergency approval...");
+                const txFix = await wmUSDC.approve(CONTRACT_ADDRESSES.morphoBlue, ethers.MaxUint256, { gasLimit: MANUAL_GAS_LIMIT });
+                await txFix.wait();
+            }
+
+            console.log("Sending supplyCollateral transaction...");
+            const tx6 = await morpho.supplyCollateral(
+                MXNB_MARKET_PARAMS_ARRAY,
+                currentWmUSDCBalance,
+                userAddress,
+                "0x",
+                { gasLimit: MANUAL_GAS_LIMIT }
+            );
 
             setTxHash(tx6.hash);
-
             await tx6.wait();
 
             // --- STEP 7: Borrow MXNB ---
@@ -272,6 +387,7 @@ export const useMorphoLoan = () => {
 
             setStep(8); // Complete
             await refreshData();
+
             setLoading(false); // Ensure loading is false on success
 
         } catch (err: any) {
@@ -289,7 +405,124 @@ export const useMorphoLoan = () => {
             // Safety check: if we are not at step 8 (success) and no error was caught (shouldn't happen due to catch),
             // or if we just want to ensure loading is off if something weird happened.
             // But we handled success case above.
-            if (step !== 8) {
+            if (step !== 8 && step < 10) {
+                setLoading(false);
+            }
+        }
+    };
+
+    const executeRepayAndWithdraw = async () => {
+        setLoading(true);
+        setError(null);
+        setTotalRepaidAmount(null);
+        setStep(11); // Start Repay Flow
+
+        try {
+            const signer = await getSigner();
+            const userAddress = await signer.getAddress();
+
+            // Contracts
+            const mxnb = new ethers.Contract(CONTRACT_ADDRESSES.mockMXNB, ERC20_ABI, signer);
+            const morpho = new ethers.Contract(CONTRACT_ADDRESSES.morphoBlue, MORPHO_ABI, signer);
+            const wmUSDC = new ethers.Contract(CONTRACT_ADDRESSES.wmUSDC, WMEMORY_ABI, signer);
+            const morphoUSDCVault = new ethers.Contract(CONTRACT_ADDRESSES.morphoUSDCVault, VAULT_ABI, signer);
+
+            // Construct Tuple Array explicitly
+            const MXNB_MARKET_PARAMS_ARRAY = [
+                MXNB_MARKET_PARAMS.loanToken,
+                MXNB_MARKET_PARAMS.collateralToken,
+                MXNB_MARKET_PARAMS.oracle,
+                MXNB_MARKET_PARAMS.irm,
+                MXNB_MARKET_PARAMS.lltv
+            ];
+
+            // Get Position Data
+            const marketId = ethers.keccak256(
+                ethers.AbiCoder.defaultAbiCoder().encode(
+                    ["address", "address", "address", "address", "uint256"],
+                    MXNB_MARKET_PARAMS_ARRAY
+                )
+            );
+            const position = await morpho.position(marketId, userAddress);
+            const borrowShares = position[1]; // borrowShares
+
+            if (borrowShares <= 0n) {
+                throw new Error("No debt to repay.");
+            }
+
+            // --- STEP 1: Approve MXNB for Morpho Blue ---
+            console.log("Step 1 (Repay): Checking MXNB Allowance");
+            // We need to approve enough MXNB. To be safe, we check balance.
+            // Repay function takes shares, but allowance is in assets. 
+            // We'll approve MaxUint256 to allow full repay + dust.
+            const mxnbBalance = await mxnb.balanceOf(userAddress);
+            if (mxnbBalance === 0n) throw new Error("No MXNB balance to repay.");
+
+            // Track amount to be repaid for stats (approximate to balance if full repay)
+            setTotalRepaidAmount(ethers.formatUnits(mxnbBalance, MXNB_DECIMALS));
+
+            const mxnbAllowance = await mxnb.allowance(userAddress, CONTRACT_ADDRESSES.morphoBlue);
+            if (mxnbAllowance < mxnbBalance) {
+                const tx1 = await mxnb.approve(CONTRACT_ADDRESSES.morphoBlue, ethers.MaxUint256, { gasLimit: MANUAL_GAS_LIMIT });
+                setTxHash(tx1.hash);
+                await tx1.wait();
+                await waitForAllowance(mxnb, userAddress, CONTRACT_ADDRESSES.morphoBlue, mxnbBalance);
+            }
+
+            // --- STEP 2: Repay Full Debt ---
+            setStep(12);
+            console.log("Step 2 (Repay): Repaying Debt");
+            // Pass 0 for assets, and borrowShares for shares to repay all
+            const tx2 = await morpho.repay(MXNB_MARKET_PARAMS_ARRAY, 0, borrowShares, userAddress, "0x", { gasLimit: MANUAL_GAS_LIMIT });
+            setTxHash(tx2.hash);
+            await tx2.wait();
+
+            // --- STEP 3: Withdraw Collateral ---
+            setStep(13);
+            console.log("Step 3 (Repay): Withdrawing Collateral");
+            // Need fresh position reading to get exact collateral amount? 
+            // Or we can assume we want to withdraw everything in the position.
+            const updatedPosition = await morpho.position(marketId, userAddress);
+            const collateralShares = updatedPosition[2];
+
+            if (collateralShares > 0n) {
+                const tx3 = await morpho.withdrawCollateral(MXNB_MARKET_PARAMS_ARRAY, collateralShares, userAddress, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
+                setTxHash(tx3.hash);
+                await tx3.wait();
+            }
+
+            // --- STEP 4: Unwrap WmUSDC -> mUSDC ---
+            setStep(14);
+            console.log("Step 4 (Repay): Unwrap WmUSDC");
+            // Wait for WmUSDC balance to be available in wallet if needed, though withdrawCollateral should be instant on EVM finality basically
+            // But let's check balance
+            const wmusdcBalance = await wmUSDC.balanceOf(userAddress);
+            if (wmusdcBalance > 0n) {
+                const tx4 = await wmUSDC.redeem(wmusdcBalance, userAddress, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
+                setTxHash(tx4.hash);
+                await tx4.wait();
+            }
+
+            // --- STEP 5: Redeem mUSDC -> USDC ---
+            setStep(15);
+            console.log("Step 5 (Repay): Redeem mUSDC");
+            const musdcBalance = await morphoUSDCVault.balanceOf(userAddress);
+            if (musdcBalance > 0n) {
+                const tx5 = await morphoUSDCVault.redeem(musdcBalance, userAddress, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
+                setTxHash(tx5.hash);
+                await tx5.wait();
+            }
+
+            setStep(16); // Complete Repay Flow
+            await refreshData();
+            setLoading(false);
+
+        } catch (err: any) {
+            console.error("Repay Error:", err);
+            let msg = err.reason || err.message || "Repay transaction failed";
+            setError(msg);
+        } finally {
+            if (step !== 16 && step >= 11) {
                 setLoading(false);
             }
         }
@@ -300,7 +533,7 @@ export const useMorphoLoan = () => {
         setError(null);
         setTxHash(null);
         setLoading(false);
-        setUsdcBalance("0.00"); // Optional: Reset balances? No, keep them.
+        // Balance reset not needed
     };
 
     return {
@@ -311,8 +544,13 @@ export const useMorphoLoan = () => {
         usdcBalance,
         mxnbBalance,
         collateralBalance,
+        borrowBalance,
+        marketLiquidity,
+        marketAPR,
+        totalRepaidAmount,
         getSimulatedDeposit,
         executeZale,
+        executeRepayAndWithdraw,
         refreshData,
         resetState
     };

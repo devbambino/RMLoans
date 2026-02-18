@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react";
 import { useMorphoLoan } from "../hooks/useMorphoLoan";
 import { usePrivy } from "@privy-io/react-auth";
-import { CheckCircleIcon, ArrowPathIcon, BanknotesIcon, CircleStackIcon, LockClosedIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, ArrowPathIcon, BanknotesIcon, CircleStackIcon, LockClosedIcon, CreditCardIcon, ChartBarIcon } from "@heroicons/react/24/outline";
 
 export default function PrestamoRapido() {
     const { authenticated, login } = usePrivy();
-    const { loading, step, error, txHash, usdcBalance, mxnbBalance, collateralBalance, executeZale, getSimulatedDeposit, resetState } = useMorphoLoan();
+    const { loading, step, error, txHash, usdcBalance, mxnbBalance, collateralBalance, borrowBalance, marketLiquidity, marketAPR, totalRepaidAmount, executeZale, executeRepayAndWithdraw, getSimulatedDeposit, resetState } = useMorphoLoan();
 
     const [borrowAmount, setBorrowAmount] = useState("");
     const [requiredDeposit, setRequiredDeposit] = useState("0.00");
@@ -35,6 +35,18 @@ export default function PrestamoRapido() {
         "Depositando Colateral",
         "Solicitando MXNB"
     ];
+
+    const getRepayStepLabel = (s: number) => {
+        switch (s) {
+            case 11: return "Verificando MXNB...";
+            case 12: return "Pagando Deuda...";
+            case 13: return "Retirando Colateral...";
+            case 14: return "Des-envolviendo WmUSDC...";
+            case 15: return "Recuperando USDC...";
+            case 16: return "¡Finalizado!";
+            default: return "Procesando...";
+        }
+    };
 
     return (
         <div className="w-full max-w-md mx-auto p-1">
@@ -69,23 +81,46 @@ export default function PrestamoRapido() {
                         <>
                             {/* Balances Grid */}
                             <div className="grid grid-cols-3 gap-2 mb-2 p-2 mt-16 bg-white/5 rounded-xl border border-white/10">
+                                {/* Row 1 */}
                                 <div className="text-center">
                                     <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
                                         <CircleStackIcon className="w-3 h-3" /> USDC
                                     </div>
-                                    <div className="font-mono text-xs text-white truncate">{usdcBalance}</div>
+                                    <div className="font-mono text-xs text-white truncate">{usdcBalance} USDC</div>
                                 </div>
                                 <div className="text-center border-l border-white/5">
                                     <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
                                         <BanknotesIcon className="w-3 h-3 text-[#50e2c3]" /> MXNB
                                     </div>
-                                    <div className="font-mono text-xs text-[#50e2c3] truncate">{mxnbBalance}</div>
+                                    <div className="font-mono text-xs text-[#50e2c3] truncate">{mxnbBalance} MXNB</div>
                                 </div>
                                 <div className="text-center border-l border-white/5">
                                     <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
                                         <LockClosedIcon className="w-3 h-3 text-purple-400" /> Colateral
                                     </div>
-                                    <div className="font-mono text-xs text-purple-300 truncate">{collateralBalance}</div>
+                                    <div className="font-mono text-xs text-purple-300 truncate">{collateralBalance} WmUSDC</div>
+                                </div>
+
+                                {/* Row 2 (New Stats) */}
+                                <div className="col-span-3 h-px bg-white/5 my-1" />
+
+                                <div className="text-center">
+                                    <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
+                                        <CreditCardIcon className="w-3 h-3 text-red-400" /> Deuda Actual
+                                    </div>
+                                    <div className="font-mono text-xs text-red-300 truncate">{borrowBalance} MXNB</div>
+                                </div>
+                                <div className="text-center border-l border-white/5">
+                                    <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
+                                        <ChartBarIcon className="w-3 h-3 text-yellow-400" /> Tasa (APR)
+                                    </div>
+                                    <div className="font-mono text-xs text-yellow-300 truncate">0.00%</div>
+                                </div>
+                                <div className="text-center border-l border-white/5">
+                                    <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
+                                        <CircleStackIcon className="w-3 h-3 text-blue-400" /> Liquidez
+                                    </div>
+                                    <div className="font-mono text-xs text-blue-300 truncate">{marketLiquidity} MXNB</div>
                                 </div>
                             </div>
 
@@ -106,9 +141,38 @@ export default function PrestamoRapido() {
                                             setBorrowAmount("");
                                             resetState();
                                         }}
-                                        className="w-full py-4 px-6 bg-gradient-to-r from-[#50e2c3] to-cyan-500 hover:from-[#40d2b3] hover:to-cyan-400 text-black font-bold rounded-xl transition-all shadow-lg hover:shadow-cyan-500/30 transform hover:-translate-y-1"
+                                        className="w-full cursor-pointer py-4 px-6 bg-gradient-to-r from-[#50e2c3] to-cyan-500 hover:from-[#40d2b3] hover:to-cyan-400 text-black font-bold rounded-xl transition-all shadow-lg hover:shadow-cyan-500/30 transform hover:-translate-y-1"
                                     >
                                         Realizar otra operación
+                                    </button>
+                                </div>
+                            ) : step === 16 ? (
+                                <div className="py-8 text-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
+                                    <div className="w-20 h-20 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-purple-500/20 border border-purple-500/20">
+                                        <CheckCircleIcon className="w-10 h-10 text-purple-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-white mb-2">¡Pago Exitoso!</h3>
+                                        <div className="text-sm bg-white/5 p-4 rounded-lg space-y-2 text-left">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-400">Total Pagado:</span>
+                                                <span className="text-white font-mono">{totalRepaidAmount || "Calculando..."} MXNB</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-400">Estado:</span>
+                                                <span className="text-green-400">Deuda Saldada</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => {
+                                            setBorrowAmount("");
+                                            resetState();
+                                        }}
+                                        className="w-full cursor-pointer py-4 px-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-purple-500/30 transform hover:-translate-y-1"
+                                    >
+                                        Volver al Inicio
                                     </button>
                                 </div>
                             ) : (
@@ -153,21 +217,41 @@ export default function PrestamoRapido() {
                                     {/* Progress Stepper (Visible when loading) */}
                                     {loading && (
                                         <div className="space-y-3 py-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                            <div className="flex justify-between text-xs text-gray-400 uppercase tracking-widest mb-1">
-                                                <span>Procesando...</span>
-                                                <span>{Math.min(step, 7)} / 7</span>
-                                            </div>
-                                            <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-gradient-to-r from-[#50e2c3] to-cyan-500 transition-all duration-500 ease-out"
-                                                    style={{ width: `${(step / 7) * 100}%` }}
-                                                />
-                                            </div>
-                                            <p className="text-center text-sm text-[#50e2c3] font-medium animate-pulse">
-                                                {step === 0 ? "Iniciando..." :
-                                                    step > 7 ? "¡Listo!" :
-                                                        steps[step - 1]}
-                                            </p>
+                                            {step < 10 ? (
+                                                <>
+                                                    <div className="flex justify-between text-xs text-gray-400 uppercase tracking-widest mb-1">
+                                                        <span>Procesando Préstamo...</span>
+                                                        <span>{Math.min(step, 7)} / 7</span>
+                                                    </div>
+                                                    <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-gradient-to-r from-[#50e2c3] to-cyan-500 transition-all duration-500 ease-out"
+                                                            style={{ width: `${(step / 7) * 100}%` }}
+                                                        />
+                                                    </div>
+                                                    <p className="text-center text-sm text-[#50e2c3] font-medium animate-pulse">
+                                                        {step === 0 ? "Iniciando..." :
+                                                            step > 7 ? "¡Listo!" :
+                                                                steps[step - 1]}
+                                                    </p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="flex justify-between text-xs text-gray-400 uppercase tracking-widest mb-1">
+                                                        <span>Procesando Pago...</span>
+                                                        <span>{Math.min(step - 10, 5)} / 5</span>
+                                                    </div>
+                                                    <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-gradient-to-r from-purple-500 to-pink-600 transition-all duration-500 ease-out"
+                                                            style={{ width: `${((step - 10) / 5) * 100}%` }}
+                                                        />
+                                                    </div>
+                                                    <p className="text-center text-sm text-purple-400 font-medium animate-pulse">
+                                                        {getRepayStepLabel(step)}
+                                                    </p>
+                                                </>
+                                            )}
                                         </div>
                                     )}
 
@@ -212,12 +296,22 @@ export default function PrestamoRapido() {
                                             "Depositar y Tomar Préstamo"
                                         )}
                                     </button>
+
+                                    {/* Repay Button - Only show if user has debt or collateral */}
+                                    {(!loading && (parseFloat(borrowBalance) > 0 || parseFloat(collateralBalance) > 0)) && (
+                                        <button
+                                            onClick={executeRepayAndWithdraw}
+                                            className="w-full mt-4 cursor-pointer py-3 px-6 rounded-xl font-bold text-sm text-purple-300 border border-purple-500/30 hover:bg-purple-500/10 transition-all shadow-lg hover:shadow-purple-500/20"
+                                        >
+                                            Pagar Todo y Retirar
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </>
                     )}
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
