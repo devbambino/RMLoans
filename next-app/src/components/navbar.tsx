@@ -13,8 +13,8 @@ export default function Header() {
     const [copied, setCopied] = useState(false); // Estado para feedback de copia
 
     const loggedOutLinks = [
-        { href: '/borrowers', key: 'Borrowers' },
-        { href: '/lenders', key: 'Lenders' },
+        { href: '/borrow', key: 'Borrow' },
+        { href: '/lend', key: 'Lend' },
     ];
 
     const loggedInLinks = [

@@ -76,12 +76,7 @@ function Home() {
           </div>
           <button
             className="bg-gray-100 text-gray-900 cursor-pointer mt-15 w-full max-w-md rounded-full px-4 py-2 font-bold hover:bg-gray-300 transition-colors duration-200 lg:px-8 lg:py-4 lg:text-xl"
-            onClick={() => {
-              login();
-              setTimeout(() => {
-                (document.querySelector('input[type="email"]') as HTMLInputElement)?.focus();
-              }, 150);
-            }}
+            onClick={login}
           >
             Conectar Wallet o Crear Cuenta
           </button>
