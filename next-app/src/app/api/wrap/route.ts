@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { parseUnits, encodeFunctionData } from "viem";
+import { encodeFunctionData } from "viem";
 import { createPublicClient, http } from "viem";
 import { baseSepolia } from "viem/chains";
 import { PrivyClient } from "@privy-io/node";
@@ -9,14 +9,13 @@ const privy = new PrivyClient({
   appSecret: process.env.PRIVY_APP_SECRET!,
 });
 
-// Cliente público para esperar confirmaciones
 const publicClient = createPublicClient({
   chain: baseSepolia,
   transport: http(),
 });
 
-const USDC_ADDRESS = "0xba50cd2a20f6da35d788639e581bca8d0b5d4d5f";
-const MORPHO_VAULT_ADDRESS = "0xA694354Ab641DFB8C6fC47Ceb9223D12cCC373f9";
+const MORPHO_USDC_VAULT = "0xA694354Ab641DFB8C6fC47Ceb9223D12cCC373f9";
+const WM_USDC = "0xCa4625EA7F3363d7E9e3090f9a293b64229FE55B";
 
 const erc20Abi = [
   {
@@ -29,9 +28,16 @@ const erc20Abi = [
     ],
     outputs: [{ name: "", type: "bool" }],
   },
+  {
+    name: "balanceOf",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
 ] as const;
 
-const vaultAbi = [
+const wmUsdcAbi = [
   {
     name: "deposit",
     type: "function",
@@ -40,26 +46,38 @@ const vaultAbi = [
       { name: "assets", type: "uint256" },
       { name: "receiver", type: "address" },
     ],
-    outputs: [],
+    outputs: [{ name: "", type: "uint256" }],
   },
 ] as const;
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { amount, walletId, userAddress } = body;
+    const { walletId, userAddress } = await req.json();
 
-    if (!amount || !walletId || !userAddress) {
+    if (!walletId || !userAddress) {
       return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
     }
 
-    const parsedAmount = parseUnits(amount, 6);
+    // Get mUSDC balance
+    const balance = await publicClient.readContract({
+      address: MORPHO_USDC_VAULT,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [userAddress as `0x${string}`],
+    });
 
-    // 1️⃣ APPROVE
+    if (balance === 0n) {
+      return NextResponse.json(
+        { error: "No mUSDC balance to wrap" },
+        { status: 400 },
+      );
+    }
+
+    // 1. Approve mUSDC for wmUSDC
     const approveData = encodeFunctionData({
       abi: erc20Abi,
       functionName: "approve",
-      args: [MORPHO_VAULT_ADDRESS as `0x${string}`, parsedAmount],
+      args: [WM_USDC as `0x${string}`, balance],
     });
 
     const approveTx = await privy
@@ -69,48 +87,43 @@ export async function POST(req: Request) {
         caip2: "eip155:84532",
         params: {
           transaction: {
-            to: USDC_ADDRESS,
+            to: MORPHO_USDC_VAULT,
             data: approveData,
             chain_id: 84532,
           },
         },
       });
 
-    // ✅ Esperar que el approve se mine antes de hacer el deposit
     await publicClient.waitForTransactionReceipt({
       hash: approveTx.hash as `0x${string}`,
     });
 
-    // 2️⃣ DEPOSIT
-    const depositData = encodeFunctionData({
-      abi: vaultAbi,
+    // 2. Wrap mUSDC -> WmUSDC
+    const wrapData = encodeFunctionData({
+      abi: wmUsdcAbi,
       functionName: "deposit",
-      args: [parsedAmount, userAddress as `0x${string}`],
+      args: [balance, userAddress as `0x${string}`],
     });
 
-    const depositTx = await privy
+    const wrapTx = await privy
       .wallets()
       .ethereum()
       .sendTransaction(walletId, {
         caip2: "eip155:84532",
         params: {
-          transaction: {
-            to: MORPHO_VAULT_ADDRESS,
-            data: depositData,
-            chain_id: 84532,
-          },
+          transaction: { to: WM_USDC, data: wrapData, chain_id: 84532 },
         },
       });
 
     return NextResponse.json({
       success: true,
       approveHash: approveTx.hash,
-      depositHash: depositTx.hash,
+      wrapHash: wrapTx.hash,
     });
   } catch (error: any) {
     console.error(error);
     return NextResponse.json(
-      { error: error?.message || "Error en la transacción" },
+      { error: error?.message || "Error" },
       { status: 500 },
     );
   }
