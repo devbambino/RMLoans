@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import Dashboard from "@/components/features/defi/Dashboard";
+import StrategyDashboard from "@/components/sections/strategy-dashboard";
 
 export default function Home() {
   const { ready, authenticated, login } = usePrivy();
@@ -21,5 +21,5 @@ export default function Home() {
     );
   }
 
-  return <Dashboard />;
+  return <StrategyDashboard />;
 }

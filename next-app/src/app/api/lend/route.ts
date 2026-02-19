@@ -1,17 +1,14 @@
 import { NextResponse } from "next/server";
-import { PrivyClient } from "@privy-io/server-auth";
-import { createWalletClient, http, parseUnits } from "viem";
-import { baseSepolia } from "viem/chains";
+import { parseUnits, encodeFunctionData } from "viem";
+import { PrivyClient } from "@privy-io/node";
 
-const privy = new PrivyClient(
-  process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-  process.env.PRIVY_APP_SECRET!,
-);
+const privy = new PrivyClient({
+  appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+  appSecret: process.env.PRIVY_APP_SECRET!,
+});
 
-// ⚠️ REEMPLAZA con la dirección real de la Vault en Base Sepolia
 const MORPHO_VAULT_ADDRESS = "0xA694354Ab641DFB8C6fC47Ceb9223D12cCC373f9";
 
-// ABI mínima para deposit
 const vaultAbi = [
   {
     name: "deposit",
@@ -23,41 +20,52 @@ const vaultAbi = [
     ],
     outputs: [],
   },
-];
+] as const;
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    const amount = parseUnits("0.01", 18); // prueba pequeña
+    const body = await req.json();
+    const { amount, walletId, userAddress } = body;
 
-    // 1️⃣ Obtener wallet server-side
-    const wallets = await privy.walletApi.getWallets();
-    const wallet = wallets[0];
-
-    if (!wallet) {
+    if (!amount || !walletId || !userAddress) {
       return NextResponse.json(
-        { error: "No Privy wallet found" },
+        { error: "Faltan datos: amount, walletId o userAddress" },
         { status: 400 },
       );
     }
 
-    // 2️⃣ Crear wallet client
-    const walletClient = createWalletClient({
-      chain: baseSepolia,
-      transport: http(process.env.BASE_SEPOLIA_RPC),
-    });
-
-    // 3️⃣ Enviar transacción
-    const hash = await walletClient.writeContract({
-      address: MORPHO_VAULT_ADDRESS as `0x${string}`,
+    const parsedAmount = parseUnits(amount, 6);
+    const dataEncoded = encodeFunctionData({
       abi: vaultAbi,
       functionName: "deposit",
-      args: [amount, wallet.address as `0x${string}`],
-      account: wallet.address as `0x${string}`,
+      args: [parsedAmount, userAddress as `0x${string}`],
     });
 
-    return NextResponse.json({ success: true, hash });
+    // ✅ Sintaxis correcta descubierta para @privy-io/node v0.9
+    const tx = await privy
+      .wallets()
+      .ethereum()
+      .sendTransaction(walletId, {
+        caip2: "eip155:84532",
+        params: {
+          transaction: {
+            to: MORPHO_VAULT_ADDRESS,
+            data: dataEncoded,
+            value: "0x0",
+            chain_id: 84532,
+          },
+        },
+      });
+
+    return NextResponse.json({
+      success: true,
+      hash: tx.hash,
+    });
   } catch (error: any) {
-    console.error(error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Detailed Error:", error);
+    return NextResponse.json(
+      { error: error?.message || "Error en la transacción" },
+      { status: 500 },
+    );
   }
 }
