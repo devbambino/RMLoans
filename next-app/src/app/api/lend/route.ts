@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
-import { parseUnits, encodeFunctionData } from "viem";
-import { createPublicClient, http } from "viem";
+import {
+  parseUnits,
+  encodeFunctionData,
+  createPublicClient,
+  getAddress,
+  http,
+} from "viem";
 import { baseSepolia } from "viem/chains";
 import { PrivyClient } from "@privy-io/node";
 
+//PON esto (sintaxis de @privy-io/node)
 const privy = new PrivyClient({
   appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
   appSecret: process.env.PRIVY_APP_SECRET!,
@@ -46,12 +52,40 @@ const vaultAbi = [
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { amount, walletId, userAddress } = body;
+    // 1. Extraer los datos (SOLO UNA VEZ)
+    const { walletId, userAddress, amount, userJwt } = await req.json();
 
-    if (!amount || !walletId || !userAddress) {
+    console.log("JWT completo:", userJwt);
+    console.log("JWT tipo:", typeof userJwt);
+    console.log("JWT length:", userJwt?.length);
+    console.log("----------------------------");
+    console.log(
+      "UserJWT sub:",
+      JSON.parse(Buffer.from(userJwt.split(".")[1], "base64").toString()).sub,
+    );
+    console.log("WalletId enviado:", walletId);
+    console.log("----------------------------");
+
+    if (!walletId || !userAddress || !amount)
       return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
-    }
+    // 2. Limpiar la dirección inmediatamente
+    // .toLowerCase() asegura que getAddress no se queje por el checksum
+
+    const cleanAddress = getAddress(userAddress.toLowerCase());
+
+    // LOGS DE CONTROL
+    console.log("--- DEBUG PRIVY EN LEND ---");
+    console.log("WalletID:", walletId);
+    console.log("Clean Address:", cleanAddress);
+    console.log("APP ID:", process.env.NEXT_PUBLIC_PRIVY_APP_ID);
+    console.log("SECRET:", process.env.PRIVY_APP_SECRET);
+    console.log("SIGNING KEY:", process.env.PRIVY_SIGNING_KEY);
+    console.log("------------********------------");
+    console.log(
+      "KEY primeros 50 chars:",
+      process.env.PRIVY_SIGNING_KEY?.substring(0, 50),
+    );
+    console.log("------------********----------------");
 
     const parsedAmount = parseUnits(amount, 6);
 
@@ -62,6 +96,14 @@ export async function POST(req: Request) {
       args: [MORPHO_VAULT_ADDRESS as `0x${string}`, parsedAmount],
     });
 
+    const rawKey = process.env.PRIVY_SIGNING_KEY!.split("\\n").join("\n");
+    const body64 = rawKey
+      .replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\n/g, "")
+      .trim()
+      .match(/.{1,64}/g)!
+      .join("\n");
+    const pemKey = `-----BEGIN PRIVATE KEY-----\n${body64}\n-----END PRIVATE KEY-----`;
+    console.log("KEY tiene saltos AFTER:", pemKey.includes("\n"));
     const approveTx = await privy
       .wallets()
       .ethereum()
@@ -74,8 +116,11 @@ export async function POST(req: Request) {
             chain_id: 84532,
           },
         },
+        authorization_context: {
+          authorization_private_keys: [pemKey],
+          user_jwts: [userJwt], // ← ambos juntos
+        },
       });
-
     // ✅ Esperar que el approve se mine antes de hacer el deposit
     await publicClient.waitForTransactionReceipt({
       hash: approveTx.hash as `0x${string}`,

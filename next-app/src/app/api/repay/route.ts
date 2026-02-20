@@ -1,6 +1,6 @@
 // /api/repay/route.ts
 import { NextResponse } from "next/server";
-import { encodeFunctionData, parseEther } from "viem";
+import { encodeFunctionData, parseEther, getAddress } from "viem";
 import { createPublicClient, http } from "viem";
 import { baseSepolia } from "viem/chains";
 import { PrivyClient } from "@privy-io/node";
@@ -8,7 +8,12 @@ import { PrivyClient } from "@privy-io/node";
 const privy = new PrivyClient({
   appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
   appSecret: process.env.PRIVY_APP_SECRET!,
-});
+  // En las versiones más nuevas, para llaves 'wallet-auth', se usa esta propiedad:
+  walletApi: {
+    authorizationPrivateKey: process.env.PRIVY_SIGNING_KEY!,
+    authorizationKeyId: process.env.PRIVY_SIGNING_KEY_ID!,
+  },
+} as any);
 
 const publicClient = createPublicClient({
   chain: baseSepolia,
@@ -96,15 +101,24 @@ const morphoAbi = [
 
 export async function POST(req: Request) {
   try {
+    // 1. Extraer los datos (SOLO UNA VEZ)
     const { walletId, userAddress } = await req.json();
+
     if (!walletId || !userAddress)
+      return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
+    // 2. Limpiamos la dirección ANTES de usarla
+    // .toLowerCase() asegura que getAddress no se queje por el checksum
+
+    const cleanAddress = getAddress(userAddress.toLowerCase());
+
+    if (!walletId)
       return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
 
     const position = await publicClient.readContract({
       address: MORPHO_BLUE,
       abi: morphoAbi,
       functionName: "position",
-      args: [MARKET_ID as `0x${string}`, userAddress as `0x${string}`],
+      args: [MARKET_ID as `0x${string}`, cleanAddress as `0x${string}`],
     });
 
     const borrowShares = position[1];
@@ -118,7 +132,7 @@ export async function POST(req: Request) {
       address: MOCK_MXNB,
       abi: erc20Abi,
       functionName: "balanceOf",
-      args: [userAddress as `0x${string}`],
+      args: [cleanAddress as `0x${string}`],
     });
 
     if (mxnbBalance === 0n)
@@ -153,7 +167,7 @@ export async function POST(req: Request) {
         MARKET_PARAMS,
         0n,
         borrowShares,
-        userAddress as `0x${string}`,
+        cleanAddress as `0x${string}`,
         "0x",
       ],
     });

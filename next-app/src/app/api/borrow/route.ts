@@ -1,12 +1,17 @@
 // /api/borrow/route.ts
 import { NextResponse } from "next/server";
-import { encodeFunctionData, parseUnits, parseEther } from "viem";
+import { encodeFunctionData, parseUnits, parseEther, getAddress } from "viem";
 import { PrivyClient } from "@privy-io/node";
 
 const privy = new PrivyClient({
   appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
   appSecret: process.env.PRIVY_APP_SECRET!,
-});
+  // En las versiones más nuevas, para llaves 'wallet-auth', se usa esta propiedad:
+  walletApi: {
+    authorizationPrivateKey: process.env.PRIVY_SIGNING_KEY!,
+    authorizationKeyId: process.env.PRIVY_SIGNING_KEY_ID!,
+  },
+} as any);
 
 const WM_USDC = "0xCa4625EA7F3363d7E9e3090f9a293b64229FE55B";
 const MORPHO_BLUE = "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb";
@@ -53,12 +58,28 @@ const morphoAbi = [
 
 export async function POST(req: Request) {
   try {
+    // 1. Extraer los datos (SOLO UNA VEZ)
     const { walletId, userAddress, amount } = await req.json();
+
     if (!walletId || !userAddress || !amount)
       return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
+    // 2. Limpiamos la dirección ANTES de usarla
+    // .toLowerCase() asegura que getAddress no se queje por el checksum
+    const cleanAddress = getAddress(userAddress.toLowerCase());
+
+    // LOGS DE CONTROL
+    console.log("--- DEBUG PRIVY EN BORROW ---");
+    console.log("WalletID:", walletId);
+    console.log("Clean Address:", cleanAddress);
+    console.log("----------------------------");
+    console.log("APP ID:", process.env.NEXT_PUBLIC_PRIVY_APP_ID);
+    console.log("SECRET:", process.env.PRIVY_APP_SECRET);
+    console.log("SIGNING KEY:", process.env.PRIVY_SIGNING_KEY);
+    console.log("SIGNING KEY ID:", process.env.PRIVY_SIGNING_KEY_ID);
 
     const parsedAmount = parseUnits(amount, 6);
 
+    // 3. USAR cleanAddress aquí (Esto quita el error de "nunca usado")
     const data = encodeFunctionData({
       abi: morphoAbi,
       functionName: "borrow",
@@ -66,8 +87,8 @@ export async function POST(req: Request) {
         MARKET_PARAMS,
         parsedAmount,
         0n,
-        userAddress as `0x${string}`,
-        userAddress as `0x${string}`,
+        cleanAddress as `0x${string}`, // Cambiado
+        cleanAddress as `0x${string}`, // Cambiado
       ],
     });
 
@@ -81,8 +102,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, hash: tx.hash });
   } catch (error: any) {
+    console.error("Error en la API:", error);
     return NextResponse.json(
-      { error: error?.message || "Error" },
+      { error: error?.message || "Error interno" },
       { status: 500 },
     );
   }

@@ -8,18 +8,16 @@ import { usePrivy } from "@privy-io/react-auth";
 // ─────────────────────────────────────────────
 type Phase = "idle" | "loading" | "success" | "error";
 
-type ActionStep = {
+type Step = {
   label: string;
   done: boolean;
 };
 
 type Balances = {
   usdc: string;
-  mUsdc: string;
-  wmUsdc: string;
   mxnb: string;
-  morphoCollateral: string;
-  morphoBorrow: string;
+  collateral: string;
+  debt: string;
 };
 
 // ─────────────────────────────────────────────
@@ -41,41 +39,43 @@ function ProgressOverlay({
   hashes,
   onClose,
 }: {
-  steps: ActionStep[];
+  steps: Step[];
   currentStep: number;
   phase: Phase;
   hashes: string[];
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="bg-[#0f1923] border border-white/10 rounded-3xl p-8 w-full max-w-sm mx-4 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+      <div className="bg-[#0f1923] border border-white/10 rounded-3xl p-8 w-full max-w-sm shadow-2xl">
+        {/* Icon */}
         <div className="text-center mb-6">
           {phase === "loading" && (
             <div className="w-14 h-14 mx-auto mb-4 rounded-full border-2 border-[#00e5ff]/20 border-t-[#00e5ff] animate-spin" />
           )}
           {phase === "success" && (
-            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-[#00e5ff]/10 flex items-center justify-center text-2xl">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-[#00e5ff]/10 border border-[#00e5ff]/30 flex items-center justify-center text-2xl text-[#00e5ff]">
               ✓
             </div>
           )}
           {phase === "error" && (
-            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center text-2xl">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-2xl text-red-400">
               ✕
             </div>
           )}
           <p className="text-white font-semibold text-lg">
             {phase === "loading" && "Processing..."}
-            {phase === "success" && "Done!"}
+            {phase === "success" && "All done!"}
             {phase === "error" && "Something went wrong"}
           </p>
         </div>
 
+        {/* Steps */}
         <div className="space-y-3 mb-6">
           {steps.map((s, i) => (
             <div key={i} className="flex items-center gap-3">
               <div
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all duration-500 ${
+                className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-xs font-bold transition-all duration-500 ${
                   s.done
                     ? "bg-[#00e5ff] text-black"
                     : i === currentStep && phase === "loading"
@@ -100,17 +100,18 @@ function ProgressOverlay({
           ))}
         </div>
 
+        {/* Transaction links */}
         {hashes.length > 0 && (
-          <div className="mb-4 space-y-1">
+          <div className="space-y-1 mb-4">
             {hashes.map((h, i) => (
               <a
                 key={i}
                 href={EXPLORER + h}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-xs text-[#00e5ff]/60 hover:text-[#00e5ff] truncate"
+                className="block text-xs text-[#00e5ff]/60 hover:text-[#00e5ff] truncate transition-colors"
               >
-                ↗ {h.slice(0, 20)}...
+                ↗ View on BaseScan
               </a>
             ))}
           </div>
@@ -130,151 +131,24 @@ function ProgressOverlay({
 }
 
 // ─────────────────────────────────────────────
-// ACTION CARD
-// ─────────────────────────────────────────────
-function ActionCard({
-  emoji,
-  title,
-  description,
-  inputLabel,
-  inputValue,
-  onInputChange,
-  buttonLabel,
-  onAction,
-  disabled,
-  highlight,
-}: {
-  emoji: string;
-  title: string;
-  description: string;
-  inputLabel?: string;
-  inputValue?: string;
-  onInputChange?: (v: string) => void;
-  buttonLabel: string;
-  onAction: () => void;
-  disabled: boolean;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-3xl p-6 border transition-all duration-300 ${
-        highlight
-          ? "bg-[#00e5ff]/5 border-[#00e5ff]/30"
-          : "bg-[#0f1923] border-white/8"
-      }`}
-    >
-      <div className="flex items-start gap-3 mb-4">
-        <span className="text-2xl">{emoji}</span>
-        <div>
-          <h3 className="text-white font-semibold text-base">{title}</h3>
-          <p className="text-white/40 text-xs mt-0.5">{description}</p>
-        </div>
-      </div>
-
-      {inputLabel && onInputChange !== undefined && (
-        <div className="mb-4">
-          <label className="block text-xs text-white/40 mb-1">
-            {inputLabel}
-          </label>
-          <input
-            type="number"
-            value={inputValue}
-            onChange={(e) => onInputChange(e.target.value)}
-            disabled={disabled}
-            placeholder="0.00"
-            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#00e5ff]/40 disabled:opacity-40 transition-all"
-          />
-        </div>
-      )}
-
-      <button
-        onClick={onAction}
-        disabled={disabled}
-        className={`w-full py-3 rounded-2xl text-sm font-bold transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${
-          highlight
-            ? "bg-[#00e5ff] text-black hover:bg-[#00e5ff]/90 active:scale-[0.98]"
-            : "bg-white/8 text-white border border-white/10 hover:bg-white/15 active:scale-[0.98]"
-        }`}
-      >
-        {buttonLabel}
-      </button>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// BALANCE PILL
-// ─────────────────────────────────────────────
-function BalancePill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-white/5 border border-white/8 rounded-2xl px-4 py-3 text-center">
-      <p className="text-white/40 text-xs mb-1">{label}</p>
-      <p className="text-white font-mono font-semibold text-sm">{value}</p>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// LOGIN SCREEN
-// ─────────────────────────────────────────────
-function LoginScreen({ onLogin }: { onLogin: () => void }) {
-  return (
-    <div className="min-h-screen bg-[#080f18] flex flex-col items-center justify-center px-6">
-      {/* Ambient glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#00e5ff]/8 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="relative z-10 text-center max-w-sm w-full">
-        <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-[#00e5ff]/10 border border-[#00e5ff]/20 flex items-center justify-center text-4xl">
-          💎
-        </div>
-
-        <h1
-          className="text-4xl font-black text-white mb-2 tracking-tight"
-          style={{ fontFamily: "'Georgia', serif" }}
-        >
-          MXNB Loans
-        </h1>
-        <p className="text-white/40 text-sm mb-10 leading-relaxed">
-          Earn yield & borrow against your USDC
-          <br />
-          on Base Sepolia · Powered by Morpho
-        </p>
-
-        <button
-          onClick={onLogin}
-          className="w-full py-4 rounded-2xl bg-[#00e5ff] text-black font-bold text-base hover:bg-[#00e5ff]/90 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-[#00e5ff]/20"
-        >
-          Get Started
-        </button>
-
-        <p className="text-white/20 text-xs mt-4">
-          Sign in with email · No wallet needed
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
 // MAIN DASHBOARD
 // ─────────────────────────────────────────────
 export default function DefiDashboard() {
-  const { ready, authenticated, login, logout, user } = usePrivy();
+  // ✅ usePrivy comes from @privy-io/react-auth — correct
+  const { ready, authenticated, login, logout, user, getAccessToken } =
+    usePrivy();
 
-  const [supplyAmount, setSupplyAmount] = useState("5");
-  const [borrowAmount, setBorrowAmount] = useState("500");
+  const [amount, setAmount] = useState("5");
+  const [borrowAmount, setBorrowAmount] = useState("100");
   const [balances, setBalances] = useState<Balances>({
     usdc: "—",
-    mUsdc: "—",
-    wmUsdc: "—",
     mxnb: "—",
-    morphoCollateral: "—",
-    morphoBorrow: "—",
+    collateral: "—",
+    debt: "—",
   });
 
-  // Progress overlay state
   const [overlayOpen, setOverlayOpen] = useState(false);
-  const [overlaySteps, setOverlaySteps] = useState<ActionStep[]>([]);
+  const [overlaySteps, setOverlaySteps] = useState<Step[]>([]);
   const [overlayCurrentStep, setOverlayCurrentStep] = useState(0);
   const [overlayPhase, setOverlayPhase] = useState<Phase>("idle");
   const [overlayHashes, setOverlayHashes] = useState<string[]>([]);
@@ -292,70 +166,67 @@ export default function DefiDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userAddress }),
       });
-      if (res.ok) setBalances(await res.json());
-    } catch {}
+      if (res.ok) {
+        const data = await res.json();
+        // Map from full balances response to simplified view
+        setBalances({
+          usdc: data.usdc ?? "—",
+          mxnb: data.mxnb ?? "—",
+          collateral: data.morphoCollateral ?? "—",
+          debt: data.morphoBorrow ?? "—",
+        });
+      }
+    } catch {
+      // silent fail
+    }
   }, [userAddress]);
 
   useEffect(() => {
     if (authenticated && userAddress) fetchBalances();
   }, [authenticated, userAddress, fetchBalances]);
 
-  // ── Generic 1-click runner ──────────────────
-  const run = useCallback(
-    async (
-      steps: string[],
-      apiPath: string,
-      body: object,
-      onHashes: (data: any) => string[],
-    ) => {
+  // ── Generic multi-step runner ───────────────
+  // Each call is a fetch — steps run sequentially
+  const runSteps = useCallback(
+    async (labels: string[], calls: (() => Promise<Response>)[]) => {
       if (!walletId || !userAddress) return;
 
-      const stepObjs: ActionStep[] = steps.map((l) => ({
-        label: l,
-        done: false,
-      }));
-      setOverlaySteps(stepObjs);
+      setOverlaySteps(labels.map((l) => ({ label: l, done: false })));
       setOverlayCurrentStep(0);
       setOverlayPhase("loading");
       setOverlayHashes([]);
       setOverlayOpen(true);
       setAnyLoading(true);
 
-      // Animate steps sequentially while waiting
-      let stepInterval: ReturnType<typeof setInterval> | null = null;
-      let fakeStep = 0;
-      if (steps.length > 1) {
-        // Advance a fake step every 3s for UX
-        stepInterval = setInterval(() => {
-          fakeStep = Math.min(fakeStep + 1, steps.length - 1);
-          setOverlayCurrentStep(fakeStep);
-        }, 3000);
-      }
+      const hashes: string[] = [];
 
       try {
-        const res = await fetch(apiPath, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...body, walletId, userAddress }),
-        });
-        const data = await res.json();
+        for (let i = 0; i < calls.length; i++) {
+          setOverlayCurrentStep(i);
+          const res = await calls[i]();
+          const data = await res.json();
 
-        if (stepInterval) clearInterval(stepInterval);
+          if (!res.ok || data.error) throw new Error(data.error || "Error");
 
-        if (!res.ok || data.error) throw new Error(data.error || "Error");
+          // Collect any tx hashes returned
+          if (data.hash) hashes.push(data.hash);
+          if (data.approveHash) hashes.push(data.approveHash);
+          if (data.depositHash) hashes.push(data.depositHash);
+          if (data.wrapHash) hashes.push(data.wrapHash);
+          if (data.collateralHash) hashes.push(data.collateralHash);
+          if (data.repayHash) hashes.push(data.repayHash);
 
-        const hashes = onHashes(data);
+          // Mark step as done
+          setOverlaySteps((prev) =>
+            prev.map((s, idx) => (idx <= i ? { ...s, done: true } : s)),
+          );
+        }
+
         setOverlayHashes(hashes);
-        setOverlaySteps(steps.map((l) => ({ label: l, done: true })));
-        setOverlayCurrentStep(steps.length - 1);
         setOverlayPhase("success");
         setTimeout(fetchBalances, 2000);
-      } catch (err: any) {
-        if (stepInterval) clearInterval(stepInterval);
+      } catch {
         setOverlayPhase("error");
-        setOverlaySteps((prev) =>
-          prev.map((s, i) => ({ ...s, done: i < fakeStep })),
-        );
       } finally {
         setAnyLoading(false);
       }
@@ -363,70 +234,67 @@ export default function DefiDashboard() {
     [walletId, userAddress, fetchBalances],
   );
 
-  // ── Actions ─────────────────────────────────
-  const handleSupply = () =>
-    run(
+  // ── Helper to build fetch calls ─────────────
+  // const api = (path: string, body: object) => () =>
+  //   fetch(path, {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify({ ...body, walletId, userAddress }),
+  //   });
+
+  const api = (path: string, body: object) => async () => {
+    const userJwt = await getAccessToken();
+    console.log("JWT generado en frontend:", userJwt?.substring(0, 30));
+    if (!userJwt) throw new Error("No JWT disponible");
+    return fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...body, walletId, userAddress, userJwt }),
+    });
+  };
+
+  // ── ACTIONS ─────────────────────────────────
+
+  // 1-click: deposit + wrap + supply collateral
+  const activateStrategy = () =>
+    runSteps(
       [
-        "Authorizing USDC",
-        "Depositing to Morpho Vault",
-        "Confirming yield position",
+        "Depositing USDC to Morpho",
+        "Wrapping to WmUSDC",
+        "Activating collateral",
       ],
-      "/api/lend",
-      { amount: supplyAmount },
-      (d) => [d.approveHash, d.depositHash].filter(Boolean),
+      [
+        api("/api/lend", { amount }),
+        api("/api/wrap", {}),
+        api("/api/supply-collateral", {}),
+      ],
     );
 
-  const handleWithdraw = () =>
-    run(
-      ["Calculating your shares", "Withdrawing USDC"],
-      "/api/withdraw-vault",
-      {},
-      (d) => [d.hash].filter(Boolean),
-    );
-
-  const handleWrap = () =>
-    run(["Authorizing mUSDC", "Wrapping to WmUSDC"], "/api/wrap", {}, (d) =>
-      [d.approveHash, d.wrapHash].filter(Boolean),
-    );
-
-  const handleUnwrap = () =>
-    run(["Unwrapping WmUSDC to mUSDC"], "/api/unwrap", {}, (d) =>
-      [d.hash].filter(Boolean),
-    );
-
-  const handleCollateral = () =>
-    run(
-      ["Authorizing WmUSDC", "Supplying collateral to Morpho Blue"],
-      "/api/supply-collateral",
-      {},
-      (d) => [d.approveHash, d.collateralHash].filter(Boolean),
-    );
-
-  const handleWithdrawCollateral = () =>
-    run(
-      ["Releasing collateral from Morpho Blue"],
-      "/api/withdraw-collateral",
-      {},
-      (d) => [d.hash].filter(Boolean),
-    );
-
-  const handleBorrow = () =>
-    run(
+  // Borrow MXNB
+  const borrowMxnb = () =>
+    runSteps(
       ["Checking collateral ratio", "Borrowing MXNB to your wallet"],
-      "/api/borrow",
-      { amount: borrowAmount },
-      (d) => [d.hash].filter(Boolean),
+      [api("/api/borrow", { amount: borrowAmount })],
     );
 
-  const handleRepay = () =>
-    run(
-      ["Authorizing MXNB", "Repaying your loan", "Clearing debt position"],
-      "/api/repay",
-      {},
-      (d) => [d.approveHash, d.repayHash].filter(Boolean),
+  // Close full position
+  const closePosition = () =>
+    runSteps(
+      [
+        "Repaying MXNB loan",
+        "Releasing collateral",
+        "Unwrapping WmUSDC",
+        "Withdrawing USDC",
+      ],
+      [
+        api("/api/repay", {}),
+        api("/api/withdraw-collateral", {}),
+        api("/api/unwrap", {}),
+        api("/api/withdraw-vault", {}),
+      ],
     );
 
-  // ── Loading / not ready ──────────────────────
+  // ── Loading state ────────────────────────────
   if (!ready) {
     return (
       <div className="min-h-screen bg-[#080f18] flex items-center justify-center">
@@ -435,17 +303,45 @@ export default function DefiDashboard() {
     );
   }
 
+  // ── Login screen ─────────────────────────────
   if (!authenticated) {
-    return <LoginScreen onLogin={login} />;
+    return (
+      <div className="min-h-screen bg-[#080f18] flex flex-col items-center justify-center px-6">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#00e5ff]/6 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 text-center max-w-sm w-full">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-[#00e5ff]/10 border border-[#00e5ff]/20 flex items-center justify-center text-4xl">
+            💎
+          </div>
+          <h1
+            className="text-4xl font-black text-white mb-2 tracking-tight"
+            style={{ fontFamily: "'Georgia', serif" }}
+          >
+            MXNB Loans
+          </h1>
+          <p className="text-white/40 text-sm mb-10 leading-relaxed">
+            Earn yield & borrow against your USDC
+            <br />
+            on Base Sepolia · Powered by Morpho
+          </p>
+          <button
+            onClick={login}
+            className="w-full py-4 rounded-2xl bg-[#00e5ff] text-black font-bold text-base hover:bg-[#00e5ff]/90 active:scale-[0.98] transition-all shadow-lg shadow-[#00e5ff]/20"
+          >
+            Get Started
+          </button>
+          <p className="text-white/20 text-xs mt-4">
+            Sign in with email · No wallet needed
+          </p>
+        </div>
+      </div>
+    );
   }
 
   // ── Dashboard ────────────────────────────────
   return (
     <div className="min-h-screen bg-[#080f18] text-white">
-      {/* Ambient glow top */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-150 h-64 bg-[#00e5ff]/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-125 h-48 bg-[#00e5ff]/4 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Progress overlay */}
       {overlayOpen && (
         <ProgressOverlay
           steps={overlaySteps}
@@ -456,159 +352,142 @@ export default function DefiDashboard() {
         />
       )}
 
-      <div className="relative z-10 max-w-lg mx-auto px-4 py-8">
+      <div className="relative z-10 max-w-md mx-auto px-4 py-10 space-y-6">
         {/* ── Header ── */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">💎</span>
-            <span
-              className="text-lg font-black tracking-tight"
+        <div className="flex justify-between items-center">
+          <div>
+            <h1
+              className="text-xl font-black tracking-tight"
               style={{ fontFamily: "'Georgia', serif" }}
             >
               MXNB Loans
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-white/30 font-mono">
+            </h1>
+            <p className="text-xs text-white/30 mt-0.5 font-mono">
               {userAddress ? shortAddr(userAddress) : ""}
-            </span>
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchBalances}
+              disabled={anyLoading}
+              className="text-xs text-white/30 hover:text-white/60 border border-white/10 px-3 py-1.5 rounded-xl transition-colors disabled:opacity-30"
+            >
+              ↺
+            </button>
             <button
               onClick={logout}
-              className="text-xs text-white/30 hover:text-white/60 transition-colors border border-white/10 px-3 py-1.5 rounded-xl"
+              className="text-xs text-white/30 hover:text-white/60 border border-white/10 px-3 py-1.5 rounded-xl transition-colors"
             >
               Logout
             </button>
           </div>
         </div>
 
-        {/* ── Balance Bar ── */}
-        <div className="grid grid-cols-3 gap-2 mb-8">
-          <BalancePill label="USDC" value={balances.usdc} />
-          <BalancePill label="mUSDC" value={balances.mUsdc} />
-          <BalancePill label="WmUSDC" value={balances.wmUsdc} />
-        </div>
-        <div className="grid grid-cols-3 gap-2 mb-8">
-          <BalancePill label="MXNB" value={balances.mxnb} />
-          <BalancePill label="Collateral" value={balances.morphoCollateral} />
-          <BalancePill label="Debt" value={balances.morphoBorrow} />
-        </div>
-
-        {/* ── Section: Earn ── */}
-        <p className="text-white/30 text-xs uppercase tracking-widest mb-3 ml-1">
-          Step 1 · Earn Yield
-        </p>
-        <div className="grid grid-cols-1 gap-3 mb-6">
-          <ActionCard
-            emoji="🏦"
-            title="Supply USDC"
-            description="Deposit USDC into Morpho Vault and start earning yield"
-            inputLabel="Amount (USDC)"
-            inputValue={supplyAmount}
-            onInputChange={setSupplyAmount}
-            buttonLabel="Supply & Earn →"
-            onAction={handleSupply}
-            disabled={anyLoading}
-            highlight
-          />
-          <ActionCard
-            emoji="↩️"
-            title="Withdraw USDC"
-            description="Redeem your mUSDC shares back to USDC"
-            buttonLabel="Withdraw All"
-            onAction={handleWithdraw}
-            disabled={anyLoading}
-          />
+        {/* ── Balances ── */}
+        <div className="bg-[#0f1923] rounded-3xl border border-white/8 p-5">
+          <p className="text-xs text-white/30 uppercase tracking-widest mb-4">
+            Your balances
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: "USDC", value: balances.usdc },
+              { label: "MXNB", value: balances.mxnb },
+              { label: "Collateral (WmUSDC)", value: balances.collateral },
+              { label: "Debt (MXNB)", value: balances.debt },
+            ].map(({ label, value }) => (
+              <div key={label} className="bg-white/4 rounded-2xl px-4 py-3">
+                <p className="text-white/40 text-xs mb-1">{label}</p>
+                <p className="text-white font-mono font-semibold text-sm">
+                  {value}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* ── Section: Wrap ── */}
-        <p className="text-white/30 text-xs uppercase tracking-widest mb-3 ml-1">
-          Step 2 · Prepare Collateral
-        </p>
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <ActionCard
-            emoji="📦"
-            title="Wrap mUSDC"
-            description="Convert mUSDC → WmUSDC to use as collateral"
-            buttonLabel="Wrap →"
-            onAction={handleWrap}
+        {/* ── Activate Strategy ── */}
+        <div className="bg-[#0f1923] rounded-3xl border border-[#00e5ff]/25 p-6">
+          <p className="text-xs text-white/40 uppercase tracking-widest mb-1">
+            Step 1
+          </p>
+          <h2 className="text-white font-bold text-lg mb-1">
+            Activate Strategy
+          </h2>
+          <p className="text-white/30 text-xs mb-5">
+            Deposit USDC → earn yield → prepare collateral. All in one click.
+          </p>
+          <label className="block text-xs text-white/40 mb-2">
+            Amount (USDC)
+          </label>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
             disabled={anyLoading}
-            highlight
+            placeholder="0.00"
+            className="w-full mb-4 px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#00e5ff]/40 disabled:opacity-40 transition-all"
           />
-          <ActionCard
-            emoji="📤"
-            title="Unwrap"
-            description="Convert WmUSDC back to mUSDC"
-            buttonLabel="Unwrap"
-            onAction={handleUnwrap}
+          <button
+            onClick={activateStrategy}
             disabled={anyLoading}
-          />
+            className="w-full py-3.5 rounded-2xl bg-[#00e5ff] text-black font-bold text-sm hover:bg-[#00e5ff]/90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#00e5ff]/10"
+          >
+            Deposit & Activate →
+          </button>
         </div>
 
-        {/* ── Section: Borrow ── */}
-        <p className="text-white/30 text-xs uppercase tracking-widest mb-3 ml-1">
-          Step 3 · Borrow MXNB
-        </p>
-        <div className="grid grid-cols-1 gap-3 mb-6">
-          <ActionCard
-            emoji="💎"
-            title="Supply Collateral"
-            description="Lock WmUSDC as collateral in Morpho Blue"
-            buttonLabel="Supply Collateral →"
-            onAction={handleCollateral}
+        {/* ── Borrow ── */}
+        <div className="bg-[#0f1923] rounded-3xl border border-white/8 p-6">
+          <p className="text-xs text-white/40 uppercase tracking-widest mb-1">
+            Step 2
+          </p>
+          <h2 className="text-white font-bold text-lg mb-1">Borrow MXNB</h2>
+          <p className="text-white/30 text-xs mb-5">
+            Borrow Mexican Peso stablecoin against your WmUSDC collateral at 77%
+            LTV.
+          </p>
+          <label className="block text-xs text-white/40 mb-2">
+            Amount (MXNB)
+          </label>
+          <input
+            type="number"
+            value={borrowAmount}
+            onChange={(e) => setBorrowAmount(e.target.value)}
             disabled={anyLoading}
-            highlight
+            placeholder="0.00"
+            className="w-full mb-4 px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#00e5ff]/40 disabled:opacity-40 transition-all"
           />
-          <ActionCard
-            emoji="💰"
-            title="Borrow MXNB"
-            description="Borrow MXNB against your WmUSDC collateral (77% LTV)"
-            inputLabel="Amount (MXNB)"
-            inputValue={borrowAmount}
-            onInputChange={setBorrowAmount}
-            buttonLabel="Borrow MXNB →"
-            onAction={handleBorrow}
+          <button
+            onClick={borrowMxnb}
             disabled={anyLoading}
-            highlight
-          />
+            className="w-full py-3.5 rounded-2xl bg-white/8 border border-white/10 text-white font-bold text-sm hover:bg-white/15 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Borrow MXNB →
+          </button>
         </div>
 
-        {/* ── Section: Repay ── */}
-        <p className="text-white/30 text-xs uppercase tracking-widest mb-3 ml-1">
-          Step 4 · Close Position
-        </p>
-        <div className="grid grid-cols-2 gap-3 mb-8">
-          <ActionCard
-            emoji="✅"
-            title="Repay Loan"
-            description="Repay your MXNB debt in full"
-            buttonLabel="Repay All"
-            onAction={handleRepay}
+        {/* ── Close Position ── */}
+        <div className="bg-[#0f1923] rounded-3xl border border-red-500/15 p-6">
+          <p className="text-xs text-white/40 uppercase tracking-widest mb-1">
+            Step 3
+          </p>
+          <h2 className="text-white font-bold text-lg mb-1">Close Position</h2>
+          <p className="text-white/30 text-xs mb-5">
+            Repay loan → release collateral → withdraw all USDC. One click.
+          </p>
+          <button
+            onClick={closePosition}
             disabled={anyLoading}
-            highlight
-          />
-          <ActionCard
-            emoji="🔓"
-            title="Free Collateral"
-            description="Withdraw WmUSDC collateral after repaying"
-            buttonLabel="Withdraw"
-            onAction={handleWithdrawCollateral}
-            disabled={anyLoading}
-          />
+            className="w-full py-3.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-sm hover:bg-red-500/20 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Close & Withdraw All
+          </button>
         </div>
 
         {/* ── Footer ── */}
-        <div className="flex justify-between items-center">
-          <span className="text-white/20 text-xs">
-            Base Sepolia · Morpho Blue
-          </span>
-          <button
-            onClick={fetchBalances}
-            disabled={anyLoading}
-            className="text-xs text-white/30 hover:text-[#00e5ff] transition-colors disabled:opacity-30"
-          >
-            ↺ Refresh
-          </button>
-        </div>
+        <p className="text-center text-white/15 text-xs pb-4">
+          Base Sepolia · Morpho Blue · Powered by Privy
+        </p>
       </div>
     </div>
   );

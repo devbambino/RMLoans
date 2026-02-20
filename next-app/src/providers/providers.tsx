@@ -1,10 +1,12 @@
 "use client";
 
+import React from "react";
+
 import { PrivyProvider } from "@privy-io/react-auth";
 import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
 import { createSolanaRpc, createSolanaRpcSubscriptions } from "@solana/kit";
 // Replace this with any of the networks listed at https://github.com/wevm/viem/blob/main/src/chains/index.ts
-import {base, arbitrum, baseSepolia, arbitrumSepolia} from 'viem/chains';
+import { base, arbitrum, baseSepolia, arbitrumSepolia } from "viem/chains";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (

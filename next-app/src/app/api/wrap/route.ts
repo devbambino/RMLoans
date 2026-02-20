@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, getAddress } from "viem";
 import { createPublicClient, http } from "viem";
 import { baseSepolia } from "viem/chains";
 import { PrivyClient } from "@privy-io/node";
@@ -7,7 +7,12 @@ import { PrivyClient } from "@privy-io/node";
 const privy = new PrivyClient({
   appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
   appSecret: process.env.PRIVY_APP_SECRET!,
-});
+  // En las versiones más nuevas, para llaves 'wallet-auth', se usa esta propiedad:
+  walletApi: {
+    authorizationPrivateKey: process.env.PRIVY_SIGNING_KEY!,
+    authorizationKeyId: process.env.PRIVY_SIGNING_KEY_ID!,
+  },
+} as any);
 
 const publicClient = createPublicClient({
   chain: baseSepolia,
@@ -52,18 +57,22 @@ const wmUsdcAbi = [
 
 export async function POST(req: Request) {
   try {
+    // 1. Extraer los datos (SOLO UNA VEZ)
     const { walletId, userAddress } = await req.json();
 
     if (!walletId || !userAddress) {
       return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
     }
+    // 2. Limpiamos la dirección ANTES de usarla
+    // .toLowerCase() asegura que getAddress no se queje por el checksum
+    const cleanAddress = getAddress(userAddress.toLowerCase());
 
     // Get mUSDC balance
     const balance = await publicClient.readContract({
       address: MORPHO_USDC_VAULT,
       abi: erc20Abi,
       functionName: "balanceOf",
-      args: [userAddress as `0x${string}`],
+      args: [cleanAddress as `0x${string}`],
     });
 
     if (balance === 0n) {
@@ -102,7 +111,7 @@ export async function POST(req: Request) {
     const wrapData = encodeFunctionData({
       abi: wmUsdcAbi,
       functionName: "deposit",
-      args: [balance, userAddress as `0x${string}`],
+      args: [balance, cleanAddress as `0x${string}`],
     });
 
     const wrapTx = await privy
