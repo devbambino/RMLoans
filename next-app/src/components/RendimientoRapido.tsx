@@ -242,8 +242,8 @@ export default function RendimientoRapido() {
 
                                     {/* Error Message */}
                                     {error && (
-                                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-sm">
-                                            <p className="font-semibold mb-1">Error</p>
+                                        <div className="p-4 text-center rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-sm">
+                                            <p className="font-semibold text-center mb-1"> Ha ocurrido un error al depositar </p>
                                             {error}
                                         </div>
                                     )}

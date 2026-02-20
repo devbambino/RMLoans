@@ -48,6 +48,10 @@ export default function PrestamoRapido() {
         }
     };
 
+    // Derived state for validation
+    const isExceedingLiquidity = borrowAmount && parseFloat(borrowAmount) > parseFloat(marketLiquidity);
+    const isInsufficientBalance = parseFloat(usdcBalance) < parseFloat(requiredDeposit || "0");
+
     return (
         <div className="w-full max-w-md mx-auto p-1">
             <div className="relative overflow-hidden rounded-2xl bg-[#0a0a0a] border border-white/10 shadow-2xl backdrop-blur-xl">
@@ -207,9 +211,15 @@ export default function PrestamoRapido() {
                                             <span className="text-gray-400">Saldo Disponible</span>
                                             <span className="text-gray-300 font-mono">{usdcBalance} USDC</span>
                                         </div>
-                                        {parseFloat(usdcBalance) < parseFloat(requiredDeposit || "0") && (
+                                        {/* Validation Errors */}
+                                        {isInsufficientBalance && (
                                             <div className="text-xs text-red-400 mt-2 flex items-center gap-1">
                                                 ⚠️ Saldo insuficiente
+                                            </div>
+                                        )}
+                                        {isExceedingLiquidity && (
+                                            <div className="text-xs text-red-400 mt-2 flex items-center gap-1">
+                                                ⚠️ Liquidez insuficiente en el mercado
                                             </div>
                                         )}
                                     </div>
@@ -257,8 +267,8 @@ export default function PrestamoRapido() {
 
                                     {/* Error Message */}
                                     {error && (
-                                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-sm">
-                                            <p className="font-semibold mb-1">Error</p>
+                                        <div className="p-4 text-center rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-sm">
+                                            <p className="font-semibold text-center mb-1">Ha ocurrido un error al solicitar el préstamo</p>
                                             {error}
                                         </div>
                                     )}
@@ -275,15 +285,15 @@ export default function PrestamoRapido() {
                                     {/* Action Button */}
                                     <button
                                         onClick={handleBorrow}
-                                        disabled={loading || !borrowAmount || parseFloat(borrowAmount) <= 0 || parseFloat(usdcBalance) < parseFloat(requiredDeposit)}
+                                        disabled={loading || !borrowAmount || parseFloat(borrowAmount) <= 0 || isInsufficientBalance || isExceedingLiquidity}
                                         className={`w-full cursor-pointer py-4 px-6 rounded-xl font-bold text-lg transition-all shadow-lg 
-                    ${loading
-                                                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                                                : (parseFloat(usdcBalance) < parseFloat(requiredDeposit || "0"))
+        ${(loading || !borrowAmount || parseFloat(borrowAmount) <= 0)
+                                                ? 'bg-gray-800/50 text-gray-500 cursor-not-allowed border border-white/5'
+                                                : (isInsufficientBalance || isExceedingLiquidity)
                                                     ? 'bg-red-500/20 text-red-400 border border-red-500/30 cursor-not-allowed'
                                                     : 'bg-gradient-to-r from-[#50e2c3] to-cyan-600 hover:from-[#40d2b3] hover:to-cyan-500 text-black shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:-translate-y-0.5'
                                             }
-                  `}
+    `}
                                     >
                                         {loading ? (
                                             <span className="flex items-center justify-center gap-2">
