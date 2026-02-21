@@ -235,17 +235,10 @@ export default function DefiDashboard() {
   );
 
   // ── Helper to build fetch calls ─────────────
-  // const api = (path: string, body: object) => () =>
-  //   fetch(path, {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify({ ...body, walletId, userAddress }),
-  //   });
 
   const api = (path: string, body: object) => async () => {
     const userJwt = await getAccessToken();
-    console.log("JWT generado en frontend:", userJwt?.substring(0, 30));
-    if (!userJwt) throw new Error("No JWT disponible");
+    console.log("JWT generado:", userJwt ? "OK" : "NULL"); // ← agrega esto
     return fetch(path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

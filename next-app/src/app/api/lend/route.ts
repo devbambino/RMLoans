@@ -7,22 +7,7 @@ import {
   http,
 } from "viem";
 import { baseSepolia } from "viem/chains";
-import { PrivyClient } from "@privy-io/server-auth";
-
-const signingKey = (process.env.PRIVY_SIGNING_KEY ?? "")
-  .split("\\n")
-  .join("\n");
-
-// ✅ Sintaxis correcta para @privy-io/server-auth
-const privy = new PrivyClient(
-  process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-  process.env.PRIVY_APP_SECRET!,
-  {
-    walletApi: {
-      authorizationPrivateKey: signingKey,
-    },
-  },
-);
+import { PrivyClient } from "@privy-io/node";
 
 const publicClient = createPublicClient({
   chain: baseSepolia,
@@ -58,15 +43,45 @@ const vaultAbi = [
   },
 ] as const;
 
+// Helper para construir el PEM correcto desde la env var
+function buildPemKey(): string {
+  const raw = process.env.PRIVY_SIGNING_KEY ?? "";
+  // Si ya tiene headers PEM, extraer solo el body base64
+  const body = raw
+    .replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----/g, "")
+    .replace(/\\n/g, "")
+    .replace(/\n/g, "")
+    .trim();
+  // Reconstruir con líneas de 64 chars (formato PEM estándar)
+  const lines = body.match(/.{1,64}/g)?.join("\n") ?? body;
+  return `-----BEGIN PRIVATE KEY-----\n${lines}\n-----END PRIVATE KEY-----`;
+}
+
 export async function POST(req: Request) {
+  // Inicializar cliente dentro del handler
+  const privy = new PrivyClient({
+    appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+    appSecret: process.env.PRIVY_APP_SECRET!,
+  });
+
   try {
-    const { walletId, userAddress, amount } = await req.json();
+    const { walletId, userAddress, amount, userJwt } = await req.json();
+    console.log(
+      "userJwt en backend:",
+      userJwt ? userJwt.substring(0, 20) : "NULL",
+    );
 
     if (!walletId || !userAddress || !amount)
       return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
 
+    if (!userJwt)
+      return NextResponse.json({ error: "Falta userJwt" }, { status: 400 });
+
     const cleanAddress = getAddress(userAddress.toLowerCase());
+    const pemKey = buildPemKey();
+
     console.log("--- LEND ---", { walletId, cleanAddress, amount });
+    console.log("PEM preview:", pemKey.substring(0, 50));
 
     const parsedAmount = parseUnits(amount, 6);
 
@@ -77,16 +92,23 @@ export async function POST(req: Request) {
       args: [MORPHO_VAULT_ADDRESS as `0x${string}`, parsedAmount],
     });
 
-    // ✅ walletApi.ethereum.sendTransaction — ethereum es PROPIEDAD, no función
-    const approveTx = await privy.walletApi.ethereum.sendTransaction({
-      walletId,
-      caip2: "eip155:84532",
-      transaction: {
-        to: USDC_ADDRESS,
-        data: approveData,
-        chainId: 84532,
-      },
-    });
+    const approveTx = await privy
+      .wallets()
+      .ethereum()
+      .sendTransaction(walletId, {
+        caip2: "eip155:84532",
+        params: {
+          transaction: {
+            to: USDC_ADDRESS,
+            data: approveData,
+            chain_id: 84532,
+          },
+        },
+        authorization_context: {
+          authorization_private_keys: [pemKey],
+          user_jwts: [userJwt],
+        },
+      });
 
     console.log("Approve hash:", approveTx.hash);
 
@@ -101,15 +123,23 @@ export async function POST(req: Request) {
       args: [parsedAmount, cleanAddress as `0x${string}`],
     });
 
-    const depositTx = await privy.walletApi.ethereum.sendTransaction({
-      walletId,
-      caip2: "eip155:84532",
-      transaction: {
-        to: MORPHO_VAULT_ADDRESS,
-        data: depositData,
-        chainId: 84532,
-      },
-    });
+    const depositTx = await privy
+      .wallets()
+      .ethereum()
+      .sendTransaction(walletId, {
+        caip2: "eip155:84532",
+        params: {
+          transaction: {
+            to: MORPHO_VAULT_ADDRESS,
+            data: depositData,
+            chain_id: 84532,
+          },
+        },
+        authorization_context: {
+          authorization_private_keys: [pemKey],
+          user_jwts: [userJwt],
+        },
+      });
 
     console.log("Deposit hash:", depositTx.hash);
 
