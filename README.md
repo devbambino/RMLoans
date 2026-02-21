@@ -2,7 +2,7 @@
 
 **Instant MXNB loans. Zero interest. Powered by Arbitrum.**
 
-RapiLoans enables users to access instant loans in MXNB (Bitso's Mexican Peso stablecoin) by collateralizing USDC, with **0% interest rates subsidized by the RapiLoans protocol**. Built on Arbitrum for speed, low costs, and accessibility to the Latin American market.
+RapiLoans, by RapiMoni, enables users to access instant loans in MXNB (Bitso's Mexican Peso stablecoin) by collateralizing USDC, with **0% interest rates subsidized by the RapiLoans protocol**. Built on Arbitrum for speed, low costs, and accessibility to the Latin American market.
 
 ---
 
@@ -275,12 +275,19 @@ This model is a **game-changing Go-to-Market strategy**:
 
 ```bash
 # Clone the repository
-git clone https://github.com/devbambino/RapiLoans.git
-cd RapiLoans
+git clone https://github.com/devbambino/RMLoans.git
+cd RMLoans
 
 # Install dependencies
 cd next-app
 pnpm install
+
+# Copy the example environment file and configure your Privy app credentials:
+cp .env.example .env.local
+
+# Update `.env.local` with your Privy app credentials:
+# Public - Safe to expose in the browser
+NEXT_PUBLIC_PRIVY_APP_ID=your_app_id_here
 
 # Start development server
 pnpm dev
