@@ -274,10 +274,10 @@ export const useMorphoLend = () => {
             let msg = err.reason || err.message || "Deposit failed";
 
             {/* User friendly error messages */ }
-            if (msg.includes("rejected")) msg = "Has rechazado la transacción";
-            if (msg.includes("insufficient liquidity")) msg = "Liquidez insuficiente";
-            if (msg.includes("exceeds max deposit")) msg = "Excede el depósito máximo";
-            else msg = "La transacción falló. Por favor, intenta de nuevo.";
+            if (msg.includes("rejected")) msg = "You rejected the transaction";
+            if (msg.includes("insufficient liquidity")) msg = "Insufficient liquidity";
+            if (msg.includes("exceeds max deposit")) msg = "Exceeds maximum deposit";
+            else msg = "The transaction failed. Please try again.";
             setError(msg);
             setLoading(false);
         }
@@ -339,7 +339,7 @@ export const useMorphoLend = () => {
             console.error("Withdraw Error:", err);
             let msg = err.reason || err.message || "Withdraw failed";
             if (msg.includes("user rejected")) msg = "User rejected transaction";
-            else msg = "La transacción falló. Por favor, intenta de nuevo.";
+            else msg = "The transaction failed. Please try again.";
             setError(msg);
             setLoading(false);
         }

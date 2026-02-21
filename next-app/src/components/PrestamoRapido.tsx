@@ -25,26 +25,26 @@ export default function PrestamoRapido() {
         if (!borrowAmount || parseFloat(borrowAmount) <= 0) return;
         await executeZale(borrowAmount);
     };
-    //pasos para el stepper
+    // Steps for the stepper
     const steps = [
-        "Aprobando USDC",
-        "Depositando en Bóveda",
-        "Aprobando mUSDC",
-        "Envolviendo a WmUSDC",
-        "Aprobando Colateral",
-        "Depositando Colateral",
-        "Solicitando MXNB"
+        "Approving USDC",
+        "Depositing in Vault",
+        "Approving mUSDC",
+        "Wrapping to WmUSDC",
+        "Approving Collateral",
+        "Depositing Collateral",
+        "Requesting MXNB"
     ];
 
     const getRepayStepLabel = (s: number) => {
         switch (s) {
-            case 11: return "Verificando MXNB...";
-            case 12: return "Pagando Deuda...";
-            case 13: return "Retirando Colateral...";
-            case 14: return "Des-envolviendo WmUSDC...";
-            case 15: return "Recuperando USDC...";
-            case 16: return "¡Finalizado!";
-            default: return "Procesando...";
+            case 11: return "Verifying MXNB...";
+            case 12: return "Paying Debt...";
+            case 13: return "Withdrawing Collateral...";
+            case 14: return "Unwrapping WmUSDC...";
+            case 15: return "Recovering USDC...";
+            case 16: return "Completed!";
+            default: return "Processing...";
         }
     };
 
@@ -62,9 +62,9 @@ export default function PrestamoRapido() {
                     <div className="flex items-center justify-between mb-8">
                         <div>
                             <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                                Prestamo Rápido
+                                Quick Loan
                             </h2>
-                            <p className="text-sm text-gray-500 mt-1">Obtén MXNB al instante</p>
+                            <p className="text-sm text-gray-500 mt-1">Get MXNB instantly</p>
                         </div>
                         <div className="p-3 rounded-full bg-white/5 border border-white/10">
                             <BanknotesIcon className="w-6 h-6 text-[#50e2c3]" />
@@ -73,12 +73,12 @@ export default function PrestamoRapido() {
 
                     {!authenticated ? (
                         <div className="text-center py-12">
-                            <p className="text-gray-400 mb-6">Conecta tu wallet para comenzar</p>
+                            <p className="text-gray-400 mb-6">Connect your wallet to get started</p>
                             <button
                                 onClick={login}
                                 className="w-full py-3 px-4 bg-gradient-to-r from-[#50e2c3] to-cyan-500 hover:from-[#40d2b3] hover:to-cyan-400 text-black font-semibold rounded-xl transition-all shadow-lg shadow-cyan-500/20"
                             >
-                                Conectar Wallet
+                                Connect Wallet
                             </button>
                         </div>
                     ) : (
@@ -100,7 +100,7 @@ export default function PrestamoRapido() {
                                 </div>
                                 <div className="text-center border-l border-white/5">
                                     <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
-                                        <LockClosedIcon className="w-3 h-3 text-purple-400" /> Colateral
+                                        <LockClosedIcon className="w-3 h-3 text-purple-400" /> Collateral
                                     </div>
                                     <div className="font-mono text-xs text-purple-300 truncate">{collateralBalance} WmUSDC</div>
                                 </div>
@@ -110,19 +110,19 @@ export default function PrestamoRapido() {
 
                                 <div className="text-center">
                                     <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
-                                        <CreditCardIcon className="w-3 h-3 text-red-400" /> Deuda Actual
+                                        <CreditCardIcon className="w-3 h-3 text-red-400" /> Current Debt
                                     </div>
                                     <div className="font-mono text-xs text-red-300 truncate">{borrowBalance} MXNB</div>
                                 </div>
                                 <div className="text-center border-l border-white/5">
                                     <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
-                                        <ChartBarIcon className="w-3 h-3 text-yellow-400" /> Tasa (APR)
+                                        <ChartBarIcon className="w-3 h-3 text-yellow-400" /> Rate (APR)
                                     </div>
                                     <div className="font-mono text-xs text-yellow-300 truncate">{marketAPR}%</div>
                                 </div>
                                 <div className="text-center border-l border-white/5">
                                     <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
-                                        <CircleStackIcon className="w-3 h-3 text-blue-400" /> Liquidez
+                                        <CircleStackIcon className="w-3 h-3 text-blue-400" /> Liquidity
                                     </div>
                                     <div className="font-mono text-xs text-blue-300 truncate">{marketLiquidity} MXNB</div>
                                 </div>
@@ -134,9 +134,9 @@ export default function PrestamoRapido() {
                                         <CheckCircleIcon className="w-10 h-10 text-green-400" />
                                     </div>
                                     <div>
-                                        <h3 className="text-2xl font-bold text-white mb-2">¡Operación Exitosa!</h3>
+                                        <h3 className="text-2xl font-bold text-white mb-2">Operation Successful!</h3>
                                         <p className="text-gray-400">
-                                            Recibiste <span className="text-[#50e2c3] font-bold text-lg">{borrowAmount} MXNB</span>
+                                            You received <span className="text-[#50e2c3] font-bold text-lg">{borrowAmount} MXNB</span>
                                         </p>
                                     </div>
 
@@ -147,7 +147,7 @@ export default function PrestamoRapido() {
                                         }}
                                         className="w-full cursor-pointer py-4 px-6 bg-gradient-to-r from-[#50e2c3] to-cyan-500 hover:from-[#40d2b3] hover:to-cyan-400 text-black font-bold rounded-xl transition-all shadow-lg hover:shadow-cyan-500/30 transform hover:-translate-y-1"
                                     >
-                                        Realizar otra operación
+                                        Perform Another Operation
                                     </button>
                                 </div>
                             ) : step === 16 ? (
@@ -156,30 +156,30 @@ export default function PrestamoRapido() {
                                         <CheckCircleIcon className="w-10 h-10 text-purple-400" />
                                     </div>
                                     <div>
-                                        <h3 className="text-2xl font-bold text-white mb-2">¡Pago Exitoso!</h3>
+                                        <h3 className="text-2xl font-bold text-white mb-2">Payment Successful!</h3>
                                         <div className="text-sm bg-white/5 p-4 rounded-lg space-y-2 text-left">
                                             <div className="flex justify-between">
-                                                <span className="text-gray-400">Total Pagado:</span>
-                                                <span className="text-white font-mono">{totalRepaidAmount || "Calculando..."} MXNB</span>
+                                                <span className="text-gray-400">Total Paid:</span>
+                                                <span className="text-white font-mono">{totalRepaidAmount || "Calculating..."} MXNB</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-400">Estado:</span>
-                                                <span className="text-green-400">Deuda Saldada</span>
+                                                <span className="text-gray-400">Status:</span>
+                                                <span className="text-green-400">Debt Settled</span>
                                             </div>
                                             {parseFloat(userPaidSubsidyInUSDC || "0") > 0 && (
                                                 <>
                                                     <div className="h-px bg-white/10 my-2" />
                                                     <div className="text-center">
                                                         <div className="text-xs text-purple-300 font-semibold mb-2 flex items-center justify-center gap-1">
-                                                            💰 Hemos subsidiado el interes del prestamo!!!
+                                                            💰 We've subsidized your loan interest!!!
                                                         </div>
                                                     </div>
                                                     <div className="flex justify-between">
-                                                        <span className="text-gray-400">Subsidio recibido:</span>
+                                                        <span className="text-gray-400">Subsidy Received:</span>
                                                         <span className="text-purple-300 font-mono">{userPaidSubsidyInUSDC} USDC</span>
                                                     </div>
                                                     <div className="flex justify-between">
-                                                        <span className="text-gray-400">Equivalente en MXNB:</span>
+                                                        <span className="text-gray-400">Equivalent in MXNB:</span>
                                                         <span className="text-purple-300 font-mono">{userInterestInMxnb} MXNB</span>
                                                     </div>
                                                 </>
@@ -194,7 +194,7 @@ export default function PrestamoRapido() {
                                         }}
                                         className="w-full cursor-pointer py-4 px-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-purple-500/30 transform hover:-translate-y-1"
                                     >
-                                        Volver al Inicio
+                                        Back to Home
                                     </button>
                                 </div>
                             ) : (
@@ -202,7 +202,7 @@ export default function PrestamoRapido() {
                                 <div className="space-y-6 py-6">
                                     <div className="group">
                                         <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wide">
-                                            ¿Cuánto MXNB quieres recibir?
+                                            How much MXNB do you want to receive?
                                         </label>
                                         <div className="relative">
                                             <input
@@ -222,22 +222,22 @@ export default function PrestamoRapido() {
                                     {/* Simulation Output */}
                                     <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-3">
                                         <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-400">Depósito Requerido (Est.)</span>
+                                            <span className="text-gray-400">Required Deposit (Est.)</span>
                                             <span className="text-white font-mono font-medium">{requiredDeposit} USDC</span>
                                         </div>
                                         <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-400">Saldo Disponible</span>
+                                            <span className="text-gray-400">Available Balance</span>
                                             <span className="text-gray-300 font-mono">{usdcBalance} USDC</span>
                                         </div>
                                         {/* Validation Errors */}
                                         {isInsufficientBalance && (
                                             <div className="text-xs text-red-400 mt-2 flex items-center gap-1">
-                                                ⚠️ Saldo insuficiente
+                                                ⚠️ Insufficient balance
                                             </div>
                                         )}
                                         {isExceedingLiquidity && (
                                             <div className="text-xs text-red-400 mt-2 flex items-center gap-1">
-                                                ⚠️ Liquidez insuficiente en el mercado
+                                                ⚠️ Insufficient liquidity in market
                                             </div>
                                         )}
                                     </div>
@@ -248,7 +248,7 @@ export default function PrestamoRapido() {
                                             {step < 10 ? (
                                                 <>
                                                     <div className="flex justify-between text-xs text-gray-400 uppercase tracking-widest mb-1">
-                                                        <span>Procesando Préstamo...</span>
+                                                        <span>Processing Loan...</span>
                                                         <span>{Math.min(step, 7)} / 7</span>
                                                     </div>
                                                     <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
@@ -258,15 +258,15 @@ export default function PrestamoRapido() {
                                                         />
                                                     </div>
                                                     <p className="text-center text-sm text-[#50e2c3] font-medium animate-pulse">
-                                                        {step === 0 ? "Iniciando..." :
-                                                            step > 7 ? "¡Listo!" :
+                                                        {step === 0 ? "Starting..." :
+                                                            step > 7 ? "Ready!" :
                                                                 steps[step - 1]}
                                                     </p>
                                                 </>
                                             ) : (
                                                 <>
                                                     <div className="flex justify-between text-xs text-gray-400 uppercase tracking-widest mb-1">
-                                                        <span>Procesando Pago...</span>
+                                                        <span>Processing Payment...</span>
                                                         <span>{Math.min(step - 10, 5)} / 5</span>
                                                     </div>
                                                     <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
@@ -286,7 +286,7 @@ export default function PrestamoRapido() {
                                     {/* Error Message */}
                                     {error && (
                                         <div className="p-4 text-center rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-sm">
-                                            <p className="font-semibold text-center mb-1">Ha ocurrido un error al solicitar el préstamo</p>
+                                            <p className="font-semibold text-center mb-1">An error occurred while requesting the loan</p>
                                             {error}
                                         </div>
                                     )}
@@ -295,8 +295,8 @@ export default function PrestamoRapido() {
                                     {step === 8 && !loading && (
                                         <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-200 text-sm text-center">
                                             <CheckCircleIcon className="w-8 h-8 mx-auto mb-2 text-green-400" />
-                                            <p className="font-bold text-lg">¡Préstamo Exitoso!</p>
-                                            <p className="opacity-80">Has estibido {borrowAmount} MXNB.</p>
+                                            <p className="font-bold text-lg">Loan Successful!</p>
+                                            <p className="opacity-80">You received {borrowAmount} MXNB.</p>
                                         </div>
                                     )}
 
@@ -316,12 +316,12 @@ export default function PrestamoRapido() {
                                         {loading ? (
                                             <span className="flex items-center justify-center gap-2">
                                                 <ArrowPathIcon className="w-5 h-5 animate-spin" />
-                                                Procesando...
+                                                Processing...
                                             </span>
                                         ) : step === 8 ? (
-                                            "Solicitar Otro Préstamo"
+                                            "Request Another Loan"
                                         ) : (
-                                            "Depositar y Tomar Préstamo"
+                                            "Deposit and Borrow"
                                         )}
                                     </button>
 
@@ -331,7 +331,7 @@ export default function PrestamoRapido() {
                                             onClick={executeRepayAndWithdraw}
                                             className="w-full mt-4 cursor-pointer py-3 px-6 rounded-xl font-bold text-sm text-purple-300 border border-purple-500/30 hover:bg-purple-500/10 transition-all shadow-lg hover:shadow-purple-500/20"
                                         >
-                                            Pagar Todo y Retirar
+                                            Pay All and Withdraw
                                         </button>
                                     )}
                                 </div>

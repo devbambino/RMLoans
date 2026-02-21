@@ -79,7 +79,7 @@ export default function Header() {
                 </div>
             </button>
 
-            {/* Chip 2: Botón Desconectar Minimalista */}
+            {/* Chip 2: Minimal Disconnect Button */}
             <button
                 onClick={() => {
                     logout();

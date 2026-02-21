@@ -53,7 +53,7 @@ export const useMorphoLoan = () => {
         const wallet = wallets[0];
         if (!wallet) throw new Error("Wallet not connected");
 
-        // Usamos el provider directo de Privy que ya maneja la conexión
+        // Using Privy's direct provider which already handles the connection
         const provider = await wallet.getEthereumProvider();
         const ethersProvider = new ethers.BrowserProvider(provider);
         return ethersProvider.getSigner();
@@ -490,11 +490,11 @@ export const useMorphoLoan = () => {
             let msg = err.reason || err.message || "Transaction failed";
 
             // Friendly error mapping
-            if (msg.includes("rejected")) msg = "Rechazaste la transacción";
-            if (msg.includes("estimateGas")) msg = "Error de estimación de gas. Posible congestión de red o conexión insuficiente.";
-            if (msg.includes("allowance")) msg = "La verificación de permiso falló. Por favor, intenta de nuevo.";
-            if (msg.includes("insufficient collateral")) msg = "Colateral insuficiente. La transacción fue revertida por el protocolo.";
-            else msg = "La transacción falló. Por favor, intenta de nuevo.";
+            if (msg.includes("rejected")) msg = "You rejected the transaction";
+            if (msg.includes("estimateGas")) msg = "Gas estimation error. Possible network congestion or insufficient connection.";
+            if (msg.includes("allowance")) msg = "Permission verification failed. Please try again.";
+            if (msg.includes("insufficient collateral")) msg = "Insufficient collateral. The transaction was reverted by the protocol.";
+            else msg = "The transaction failed. Please try again.";
             setError(msg);
             // Auto-reset handled by useEffect
         } finally {
@@ -645,11 +645,11 @@ export const useMorphoLoan = () => {
         } catch (err: any) {
             console.error("Repay Error:", err);
             let msg = err.reason || err.message || "Repay transaction failed";
-            if (msg.includes("rejected")) msg = "Rechazaste la transacción";
-            if (msg.includes("reverted")) msg = "La transacción fue revertida por el protocolo, revisa tu ETH y la liquidez en el mercado";
-            if (msg.includes("allowance")) msg = "La verificación de permiso falló. Por favor, intenta de nuevo.";
-            if (msg.includes("insufficient collateral")) msg = "Colateral insuficiente. La transacción fue revertida por el protocolo.";
-            else msg = "La transacción falló. Por favor, intenta de nuevo.";
+            if (msg.includes("rejected")) msg = "You rejected the transaction";
+            if (msg.includes("reverted")) msg = "The transaction was reverted by the protocol. Check your ETH and market liquidity.";
+            if (msg.includes("allowance")) msg = "Permission verification failed. Please try again.";
+            if (msg.includes("insufficient collateral")) msg = "Insufficient collateral. The transaction was reverted by the protocol.";
+            else msg = "The transaction failed. Please try again.";
             setError(msg);
 
         } finally {

@@ -23,10 +23,10 @@ function Home() {
             <section className="max-w-5xl mx-auto py-16 px-6">
               <div className="text-center mb-12">
                 <h2 className="text-4xl font-extrabold text-gray-400 tracking-tight">
-                  Bienvenido a <span className="text-indigo-400">RapiMoni</span>
+                  Welcome to <span className="text-indigo-400">RapiMoni</span>
                 </h2>
                 <p className="mt-4 text-lg text-gray-200 max-w-2xl mx-auto">
-                  La plataforma descentralizada para gestionar tu capital de forma ágil y segura.
+                  A decentralized platform to manage your capital swiftly and securely.
                 </p>
               </div>
 
@@ -40,10 +40,10 @@ function Home() {
                   </div>
                   <h3 className="text-2xl font-bold text-gray-400 mb-3">Borrow</h3>
                   <p className="text-gray-200 leading-relaxed mb-6">
-                    Accede a liquidez inmediata depositando tus activos como garantía. Préstamos rápidos, sin intermediarios y con total transparencia.
+                    Access immediate liquidity by depositing your assets as collateral. Fast loans, no intermediaries, and complete transparency.
                   </p>
                   <Link href="/borrow" className="inline-flex items-center font-semibold text-indigo-600 hover:text-indigo-700">
-                    Solicitar préstamo <span className="ml-2">→</span>
+                    Request Loan <span className="ml-2">→</span>
                   </Link>
                 </div>
 
@@ -56,10 +56,10 @@ function Home() {
                   </div>
                   <h3 className="text-2xl font-bold text-gray-400 mb-3">Lend</h3>
                   <p className="text-gray-200 leading-relaxed mb-6">
-                    Haz que tus ahorros trabajen por ti. Aporta liquidez al protocolo y genera rendimientos pasivos de forma constante y segura.
+                    Make your savings work for you. Provide liquidity to the protocol and generate passive income constantly and securely.
                   </p>
                   <Link href="/lend" className="inline-flex items-center font-semibold text-emerald-600 hover:text-emerald-700">
-                    Empezar a ganar <span className="ml-2">→</span>
+                    Start Earning <span className="ml-2">→</span>
                   </Link>
                 </div>
               </div>
@@ -69,16 +69,16 @@ function Home() {
       ) : (
         <section className="flex flex-col py-20 h-screen items-center gap-10">
           <div className="text-center">
-            <h2 className="text-4xl font-extrabold text-gray-400 tracking-tight">Bienvenido a RapiMoni</h2>
+            <h2 className="text-4xl font-extrabold text-gray-400 tracking-tight">Welcome to RapiMoni</h2>
             <p className="mt-4 text-lg text-gray-200 max-w-2xl mx-auto">
-              La plataforma descentralizada para gestionar tu capital de forma ágil y segura.
+              A decentralized platform to manage your capital swiftly and securely.
             </p>
           </div>
           <button
             className="bg-gray-100 text-gray-900 cursor-pointer mt-15 w-full max-w-md rounded-full px-4 py-2 font-bold hover:bg-gray-300 transition-colors duration-200 lg:px-8 lg:py-4 lg:text-xl"
             onClick={login}
           >
-            Conectar Wallet o Crear Cuenta
+            Connect Wallet or Create Account
           </button>
         </section>
       )}
