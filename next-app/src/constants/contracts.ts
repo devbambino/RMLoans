@@ -73,6 +73,7 @@ export const WMEMORY_ABI = [
     "function redeemWithInterestSubsidy(uint256 shares, address receiver, address owner) external returns (uint256)",
     "function userInterestSubsidyInWmUSDC(address) view returns (uint256)",
     "function userInterestInMxnb(address) view returns (uint256)",
+    "function userPaidSubsidyInUSDC(address) view returns (uint256)",
 ];
 
 export const MORPHO_ABI = [
@@ -86,4 +87,8 @@ export const MORPHO_ABI = [
 
 export const ORACLE_ABI = [
     "function price() external view returns (uint256)",
+];
+
+export const IRM_ABI = [
+    "function borrowRateView(tuple(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv) marketParams, tuple(uint128 totalSupplyAssets, uint128 totalSupplyShares, uint128 totalBorrowAssets, uint128 totalBorrowShares, uint128 lastUpdate, uint128 fee) marketStatus) external view returns (uint256)",
 ];

@@ -6,6 +6,10 @@ import {
     CONTRACT_ADDRESSES,
     ERC20_ABI,
     VAULT_ABI,
+    MORPHO_ABI,
+    IRM_ABI,
+    MXNB_MARKET_PARAMS,
+    MARKET_IDS,
 } from '../constants/contracts';
 
 const MXNB_DECIMALS = 6;
@@ -34,7 +38,11 @@ export const useMorphoLend = () => {
     const [vaultSharesBalance, setVaultSharesBalance] = useState<string>("0.000");
     const [vaultAssetsBalance, setVaultAssetsBalance] = useState<string>("0.000");
     const [tvl, setTvl] = useState<string>("0.000");
-    const [apy, setApy] = useState<string>("10.80"); // Static as requested
+    const [apy, setApy] = useState<number>(0);
+    
+    // Market data states for APY calculation
+    const [totalSupplied, setTotalSupplied] = useState<number>(0);
+    const [totalBorrowed, setTotalBorrowed] = useState<number>(0);
 
     // Helper: Format with max 3 decimals
     const formatBalance = (val: bigint, decimals: number) => {
@@ -53,6 +61,78 @@ export const useMorphoLend = () => {
         const ethersProvider = new ethers.BrowserProvider(provider);
         return ethersProvider.getSigner();
     }, [wallets]);
+
+    // Fetch market details and borrow rate for APY calculation
+    const fetchMarketData = useCallback(async () => {
+        try {
+            if (!wallets.length) return;
+            const signer = await getSigner();
+
+            const morphoContract = new ethers.Contract(
+                CONTRACT_ADDRESSES.morphoBlue,
+                MORPHO_ABI,
+                signer
+            );
+
+            // Read market details
+            const marketDetails = await morphoContract.market(MARKET_IDS.mxnb);
+            const totalSupplyAssets = Number(ethers.formatUnits(marketDetails.totalSupplyAssets, 6));
+            const totalBorrowAssets = Number(ethers.formatUnits(marketDetails.totalBorrowAssets, 6));
+
+            setTotalSupplied(totalSupplyAssets);
+            setTotalBorrowed(totalBorrowAssets);
+
+            // Read borrow rate from IRM
+            const irmContract = new ethers.Contract(
+                MXNB_MARKET_PARAMS.irm,
+                IRM_ABI,
+                signer
+            );
+
+            // Reconstruct market tuple as plain array to avoid read-only errors
+            const marketTuple = [
+                marketDetails[0],   // totalSupplyAssets
+                marketDetails[1],   // totalSupplyShares
+                marketDetails[2],   // totalBorrowAssets
+                marketDetails[3],   // totalBorrowShares
+                marketDetails[4],   // lastUpdate
+                marketDetails[5],   // fee
+            ];
+
+            const borrowRate = await irmContract.borrowRateView(
+                [
+                    MXNB_MARKET_PARAMS.loanToken,
+                    MXNB_MARKET_PARAMS.collateralToken,
+                    MXNB_MARKET_PARAMS.oracle,
+                    MXNB_MARKET_PARAMS.irm,
+                    MXNB_MARKET_PARAMS.lltv,
+                ],
+                marketTuple
+            );
+
+            console.log("Market Details:", { totalSupplyAssets, totalBorrowAssets });
+            console.log("Borrow Rate (per second):", borrowRate.toString());
+
+            // Calculate APY
+            const feeRate = 0; // Fee rate in decimals
+            const borrowRateDecimal = Number(borrowRate) / 1e18;
+            const secondsPerYear = 60 * 60 * 24 * 365;
+            const utilization = totalBorrowAssets / totalSupplyAssets;
+            const borrowApy = Math.exp(borrowRateDecimal * secondsPerYear) - 1;
+            const supplyApy = borrowApy * utilization * (1 - feeRate);
+
+            setApy(supplyApy);
+            console.log("APY Calculation:", {
+                borrowRate: borrowRateDecimal,
+                utilization,
+                borrowApy,
+                supplyApy,
+                supplyApyPercent: supplyApy * 100,
+            });
+        } catch (err) {
+            console.error("Error fetching market data:", err);
+        }
+    }, [wallets, getSigner]);
 
     const refreshData = useCallback(async () => {
         try {
@@ -85,10 +165,12 @@ export const useMorphoLend = () => {
             setVaultAssetsBalance(formatBalance(assetsBal, MXNB_DECIMALS));
             setTvl(formatBalance(totalAssetsVal, MXNB_DECIMALS));
 
+            // Fetch market data for APY
+            await fetchMarketData();
         } catch (err) {
             console.error("Error refreshing data:", err);
         }
-    }, [wallets, getSigner]);
+    }, [wallets, getSigner, fetchMarketData]);
 
     useEffect(() => {
         refreshData();
@@ -281,7 +363,7 @@ export const useMorphoLend = () => {
         vaultSharesBalance,
         vaultAssetsBalance,
         tvl,
-        apy,
+        apy: (apy * 100).toFixed(2), // Return as percentage string for display
         withdrawnAmount,
         yieldEarned,
         executeDeposit,

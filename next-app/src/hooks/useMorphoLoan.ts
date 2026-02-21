@@ -8,7 +8,9 @@ import {
     VAULT_ABI,
     WMEMORY_ABI,
     MORPHO_ABI,
+    IRM_ABI,
     MXNB_MARKET_PARAMS,
+    MARKET_IDS,
 } from '../constants/contracts';
 
 const TARGET_LTV = 0.70; // Conservative LTV target for calculation
@@ -27,9 +29,13 @@ export const useMorphoLoan = () => {
     const [collateralBalance, setCollateralBalance] = useState<string>("0.00");
     const [borrowBalance, setBorrowBalance] = useState<string>("0.00");
     const [marketLiquidity, setMarketLiquidity] = useState<string>("0");
-    const [marketAPR, setMarketAPR] = useState<string>("0.00");
+    const [marketAPR, setMarketAPR] = useState<number>(0);
     const [totalRepaidAmount, setTotalRepaidAmount] = useState<string | null>(null);
     const [oraclePrice, setOraclePrice] = useState<bigint>(0n);
+
+    // Market data states for APR calculation
+    const [totalSupplied, setTotalSupplied] = useState<number>(0);
+    const [totalBorrowed, setTotalBorrowed] = useState<number>(0);
 
     // Helper: Format with max 3 decimals
     const formatBalance = (val: bigint, decimals: number) => {
@@ -50,6 +56,69 @@ export const useMorphoLoan = () => {
         const ethersProvider = new ethers.BrowserProvider(provider);
         return ethersProvider.getSigner();
     }, [wallets]);
+
+    // Fetch market APR by reading borrow rate from IRM
+    const fetchMarketAPR = useCallback(async () => {
+        try {
+            if (!wallets.length) return;
+            const signer = await getSigner();
+
+            const morpho = new ethers.Contract(CONTRACT_ADDRESSES.morphoBlue, MORPHO_ABI, signer);
+
+            // Read market details
+            const marketDetails = await morpho.market(MARKET_IDS.mxnb);
+            const totalSupplyAssets = Number(ethers.formatUnits(marketDetails.totalSupplyAssets, MXNB_DECIMALS));
+            const totalBorrowAssets = Number(ethers.formatUnits(marketDetails.totalBorrowAssets, MXNB_DECIMALS));
+
+            setTotalSupplied(totalSupplyAssets);
+            setTotalBorrowed(totalBorrowAssets);
+
+            // Read borrow rate from IRM
+            const irmContract = new ethers.Contract(
+                MXNB_MARKET_PARAMS.irm,
+                IRM_ABI,
+                signer
+            );
+
+            // Reconstruct market tuple as plain array to avoid read-only errors
+            const marketTuple = [
+                marketDetails[0],   // totalSupplyAssets
+                marketDetails[1],   // totalSupplyShares
+                marketDetails[2],   // totalBorrowAssets
+                marketDetails[3],   // totalBorrowShares
+                marketDetails[4],   // lastUpdate
+                marketDetails[5],   // fee
+            ];
+
+            const borrowRate = await irmContract.borrowRateView(
+                [
+                    MXNB_MARKET_PARAMS.loanToken,
+                    MXNB_MARKET_PARAMS.collateralToken,
+                    MXNB_MARKET_PARAMS.oracle,
+                    MXNB_MARKET_PARAMS.irm,
+                    MXNB_MARKET_PARAMS.lltv,
+                ],
+                marketTuple
+            );
+
+            console.log("Market Details:", { totalSupplyAssets, totalBorrowAssets });
+            console.log("Borrow Rate (per second):", borrowRate.toString());
+
+            // Calculate APR (borrowing rate)
+            const borrowRateDecimal = Number(borrowRate) / 1e18;
+            const secondsPerYear = 60 * 60 * 24 * 365;
+            const borrowApr = Math.exp(borrowRateDecimal * secondsPerYear) - 1;
+
+            setMarketAPR(borrowApr);
+            console.log("APR Calculation:", {
+                borrowRate: borrowRateDecimal,
+                borrowApr,
+                borrowAprPercent: borrowApr * 100,
+            });
+        } catch (err) {
+            console.error("Error fetching market APR:", err);
+        }
+    }, [wallets, getSigner]);
 
     // Fetch balances
     const refreshData = useCallback(async () => {
@@ -108,13 +177,13 @@ export const useMorphoLoan = () => {
             const price = await oracle.price();
             setOraclePrice(price);
 
-            // Static APR as requested
-            setMarketAPR("0.00");
+            // Fetch market APR
+            await fetchMarketAPR();
 
         } catch (err) {
             console.error("Error refreshing data:", err);
         }
-    }, [wallets, getSigner]);
+    }, [wallets, getSigner, fetchMarketAPR]);
 
     useEffect(() => {
         refreshData();
@@ -501,11 +570,11 @@ export const useMorphoLoan = () => {
             console.log('✓ Interest confirmed:', userInterestSubsidyInWmUSDC);
 
             await waitForSubsidyIncrease(wmUSDC, userAddress, initialRawSubsidyUSDC);
-            const rawSubsidyUSDC = await wmUSDC.userInterestSubsidyInWmUSDC(userAddress);
-            const paidSubsidyUSDC = ethers.formatUnits(rawSubsidyUSDC, 18);
-            const rawSubsidyMXNB = await wmUSDC.userInterestInMxnb(userAddress);
-            const paidSubsidyMXNB = ethers.formatUnits(rawSubsidyMXNB, 6);
-            console.log(`User Subsidy: ${paidSubsidyUSDC} USDC (${paidSubsidyMXNB} MXNB)`);
+            const rawEstimatedSubsidyUSDC = await wmUSDC.userInterestSubsidyInWmUSDC(userAddress);
+            const estimatedSubsidyUSDC = ethers.formatUnits(rawEstimatedSubsidyUSDC, 18);
+            const rawEstimatedSubsidyMXNB = await wmUSDC.userInterestInMxnb(userAddress);
+            const estimatedSubsidyMXNB = ethers.formatUnits(rawEstimatedSubsidyMXNB, 6);
+            console.log(`User Subsidy: ${estimatedSubsidyUSDC} USDC (${estimatedSubsidyMXNB} MXNB)`);
 
             // --- STEP 2: Repay Full Debt ---
             setStep(12);
@@ -561,6 +630,10 @@ export const useMorphoLoan = () => {
             }
 
             setStep(16); // Complete Repay Flow
+            const rawPaidSubsidyUSDC = await wmUSDC.userPaidSubsidyInUSDC(userAddress);
+            const paidSubsidyUSDC = ethers.formatUnits(rawPaidSubsidyUSDC, 6);
+            console.log(`Paid Subsidy: ${paidSubsidyUSDC} USDC (${estimatedSubsidyMXNB} MXNB)`);
+
             await refreshData();
             setLoading(false);
 
@@ -599,7 +672,7 @@ export const useMorphoLoan = () => {
         collateralBalance,
         borrowBalance,
         marketLiquidity,
-        marketAPR,
+        marketAPR: (marketAPR * 100).toFixed(2), // Return as percentage string for display
         totalRepaidAmount,
         getSimulatedDeposit,
         executeZale,

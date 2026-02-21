@@ -118,7 +118,7 @@ export default function PrestamoRapido() {
                                     <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
                                         <ChartBarIcon className="w-3 h-3 text-yellow-400" /> Tasa (APR)
                                     </div>
-                                    <div className="font-mono text-xs text-yellow-300 truncate">0.00%</div>
+                                    <div className="font-mono text-xs text-yellow-300 truncate">{marketAPR}%</div>
                                 </div>
                                 <div className="text-center border-l border-white/5">
                                     <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
