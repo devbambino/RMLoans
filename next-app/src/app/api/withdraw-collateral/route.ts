@@ -3,17 +3,18 @@ import { NextResponse } from "next/server";
 import { encodeFunctionData, parseEther, getAddress } from "viem";
 import { createPublicClient, http } from "viem";
 import { baseSepolia } from "viem/chains";
-import { PrivyClient } from "@privy-io/node";
+import { PrivyClient } from "@privy-io/server-auth";
 
-const privy = new PrivyClient({
-  appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-  appSecret: process.env.PRIVY_APP_SECRET!,
-  // En las versiones más nuevas, para llaves 'wallet-auth', se usa esta propiedad:
-  walletApi: {
-    authorizationPrivateKey: process.env.PRIVY_SIGNING_KEY!,
-    authorizationKeyId: process.env.PRIVY_SIGNING_KEY_ID!,
+// ✅ Sintaxis correcta para @privy-io/server-auth
+const privy = new PrivyClient(
+  process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+  process.env.PRIVY_APP_SECRET!,
+  {
+    walletApi: {
+      authorizationPrivateKey: process.env.PRIVY_SIGNING_KEY!,
+    },
   },
-} as any);
+);
 
 const publicClient = createPublicClient({
   chain: baseSepolia,
@@ -85,6 +86,7 @@ export async function POST(req: Request) {
     // 2. Limpiamos la dirección ANTES de usarla
     // .toLowerCase() asegura que getAddress no se queje por el checksum
     const cleanAddress = getAddress(userAddress.toLowerCase());
+    console.log("--- WITHDRAW COLLATERAL ---", { walletId, cleanAddress });
 
     const position = await publicClient.readContract({
       address: MORPHO_BLUE,
@@ -100,7 +102,8 @@ export async function POST(req: Request) {
         { status: 400 },
       );
 
-    const data = encodeFunctionData({
+    // 3. Preparamos la transacción (SOLO UNA VEZ)
+    const withdrawCollateralData = encodeFunctionData({
       abi: morphoAbi,
       functionName: "withdrawCollateral",
       args: [
@@ -111,13 +114,15 @@ export async function POST(req: Request) {
       ],
     });
 
-    const tx = await privy
-      .wallets()
-      .ethereum()
-      .sendTransaction(walletId, {
-        caip2: "eip155:84532",
-        params: { transaction: { to: MORPHO_BLUE, data, chain_id: 84532 } },
-      });
+    const tx = await privy.walletApi.ethereum.sendTransaction({
+      walletId,
+      caip2: "eip155:84532",
+      transaction: {
+        to: MORPHO_BLUE,
+        data: withdrawCollateralData,
+        chainId: 84532,
+      },
+    });
 
     return NextResponse.json({ success: true, hash: tx.hash });
   } catch (error: any) {

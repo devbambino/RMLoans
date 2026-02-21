@@ -3,17 +3,18 @@ import { NextResponse } from "next/server";
 import { encodeFunctionData, parseEther, getAddress } from "viem";
 import { createPublicClient, http } from "viem";
 import { baseSepolia } from "viem/chains";
-import { PrivyClient } from "@privy-io/node";
+import { PrivyClient } from "@privy-io/server-auth";
 
-const privy = new PrivyClient({
-  appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-  appSecret: process.env.PRIVY_APP_SECRET!,
-  // En las versiones más nuevas, para llaves 'wallet-auth', se usa esta propiedad:
-  walletApi: {
-    authorizationPrivateKey: process.env.PRIVY_SIGNING_KEY!,
-    authorizationKeyId: process.env.PRIVY_SIGNING_KEY_ID!,
+// ✅ Sintaxis correcta para @privy-io/server-auth
+const privy = new PrivyClient(
+  process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+  process.env.PRIVY_APP_SECRET!,
+  {
+    walletApi: {
+      authorizationPrivateKey: process.env.PRIVY_SIGNING_KEY!,
+    },
   },
-} as any);
+);
 
 const publicClient = createPublicClient({
   chain: baseSepolia,
@@ -111,8 +112,7 @@ export async function POST(req: Request) {
 
     const cleanAddress = getAddress(userAddress.toLowerCase());
 
-    if (!walletId)
-      return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
+    console.log("--- REPAY ---", { walletId, cleanAddress });
 
     const position = await publicClient.readContract({
       address: MORPHO_BLUE,
@@ -145,15 +145,16 @@ export async function POST(req: Request) {
       args: [MORPHO_BLUE as `0x${string}`, mxnbBalance],
     });
 
-    const approveTx = await privy
-      .wallets()
-      .ethereum()
-      .sendTransaction(walletId, {
-        caip2: "eip155:84532",
-        params: {
-          transaction: { to: MOCK_MXNB, data: approveData, chain_id: 84532 },
-        },
-      });
+    // ✅ walletApi.ethereum.sendTransaction — ethereum es PROPIEDAD, no función
+    const approveTx = await privy.walletApi.ethereum.sendTransaction({
+      walletId,
+      caip2: "eip155:84532",
+      transaction: {
+        to: MOCK_MXNB,
+        data: approveData,
+        chainId: 84532,
+      },
+    });
 
     await publicClient.waitForTransactionReceipt({
       hash: approveTx.hash as `0x${string}`,
@@ -172,15 +173,15 @@ export async function POST(req: Request) {
       ],
     });
 
-    const repayTx = await privy
-      .wallets()
-      .ethereum()
-      .sendTransaction(walletId, {
-        caip2: "eip155:84532",
-        params: {
-          transaction: { to: MORPHO_BLUE, data: repayData, chain_id: 84532 },
-        },
-      });
+    const repayTx = await privy.walletApi.ethereum.sendTransaction({
+      walletId,
+      caip2: "eip155:84532",
+      transaction: {
+        to: MORPHO_BLUE,
+        data: repayData,
+        chainId: 84532,
+      },
+    });
 
     return NextResponse.json({
       success: true,

@@ -1,17 +1,18 @@
 // /api/borrow/route.ts
 import { NextResponse } from "next/server";
 import { encodeFunctionData, parseUnits, parseEther, getAddress } from "viem";
-import { PrivyClient } from "@privy-io/node";
+import { PrivyClient } from "@privy-io/server-auth";
 
-const privy = new PrivyClient({
-  appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-  appSecret: process.env.PRIVY_APP_SECRET!,
-  // En las versiones más nuevas, para llaves 'wallet-auth', se usa esta propiedad:
-  walletApi: {
-    authorizationPrivateKey: process.env.PRIVY_SIGNING_KEY!,
-    authorizationKeyId: process.env.PRIVY_SIGNING_KEY_ID!,
+// ✅ Sintaxis correcta para @privy-io/server-auth
+const privy = new PrivyClient(
+  process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+  process.env.PRIVY_APP_SECRET!,
+  {
+    walletApi: {
+      authorizationPrivateKey: process.env.PRIVY_SIGNING_KEY!,
+    },
   },
-} as any);
+);
 
 const WM_USDC = "0xCa4625EA7F3363d7E9e3090f9a293b64229FE55B";
 const MORPHO_BLUE = "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb";
@@ -71,16 +72,15 @@ export async function POST(req: Request) {
     console.log("--- DEBUG PRIVY EN BORROW ---");
     console.log("WalletID:", walletId);
     console.log("Clean Address:", cleanAddress);
-    console.log("----------------------------");
     console.log("APP ID:", process.env.NEXT_PUBLIC_PRIVY_APP_ID);
     console.log("SECRET:", process.env.PRIVY_APP_SECRET);
     console.log("SIGNING KEY:", process.env.PRIVY_SIGNING_KEY);
-    console.log("SIGNING KEY ID:", process.env.PRIVY_SIGNING_KEY_ID);
+    console.log("----------------------------");
 
     const parsedAmount = parseUnits(amount, 6);
 
     // 3. USAR cleanAddress aquí (Esto quita el error de "nunca usado")
-    const data = encodeFunctionData({
+    const borrowData = encodeFunctionData({
       abi: morphoAbi,
       functionName: "borrow",
       args: [
@@ -92,13 +92,15 @@ export async function POST(req: Request) {
       ],
     });
 
-    const tx = await privy
-      .wallets()
-      .ethereum()
-      .sendTransaction(walletId, {
-        caip2: "eip155:84532",
-        params: { transaction: { to: MORPHO_BLUE, data, chain_id: 84532 } },
-      });
+    const tx = await privy.walletApi.ethereum.sendTransaction({
+      walletId,
+      caip2: "eip155:84532",
+      transaction: {
+        to: MORPHO_BLUE,
+        data: borrowData,
+        chainId: 84532,
+      },
+    });
 
     return NextResponse.json({ success: true, hash: tx.hash });
   } catch (error: any) {

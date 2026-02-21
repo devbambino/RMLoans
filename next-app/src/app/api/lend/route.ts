@@ -7,15 +7,23 @@ import {
   http,
 } from "viem";
 import { baseSepolia } from "viem/chains";
-import { PrivyClient } from "@privy-io/node";
+import { PrivyClient } from "@privy-io/server-auth";
 
-//PON esto (sintaxis de @privy-io/node)
-const privy = new PrivyClient({
-  appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-  appSecret: process.env.PRIVY_APP_SECRET!,
-});
+const signingKey = (process.env.PRIVY_SIGNING_KEY ?? "")
+  .split("\\n")
+  .join("\n");
 
-// Cliente público para esperar confirmaciones
+// ✅ Sintaxis correcta para @privy-io/server-auth
+const privy = new PrivyClient(
+  process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+  process.env.PRIVY_APP_SECRET!,
+  {
+    walletApi: {
+      authorizationPrivateKey: signingKey,
+    },
+  },
+);
+
 const publicClient = createPublicClient({
   chain: baseSepolia,
   transport: http(),
@@ -52,40 +60,13 @@ const vaultAbi = [
 
 export async function POST(req: Request) {
   try {
-    // 1. Extraer los datos (SOLO UNA VEZ)
-    const { walletId, userAddress, amount, userJwt } = await req.json();
-
-    console.log("JWT completo:", userJwt);
-    console.log("JWT tipo:", typeof userJwt);
-    console.log("JWT length:", userJwt?.length);
-    console.log("----------------------------");
-    console.log(
-      "UserJWT sub:",
-      JSON.parse(Buffer.from(userJwt.split(".")[1], "base64").toString()).sub,
-    );
-    console.log("WalletId enviado:", walletId);
-    console.log("----------------------------");
+    const { walletId, userAddress, amount } = await req.json();
 
     if (!walletId || !userAddress || !amount)
       return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
-    // 2. Limpiar la dirección inmediatamente
-    // .toLowerCase() asegura que getAddress no se queje por el checksum
 
     const cleanAddress = getAddress(userAddress.toLowerCase());
-
-    // LOGS DE CONTROL
-    console.log("--- DEBUG PRIVY EN LEND ---");
-    console.log("WalletID:", walletId);
-    console.log("Clean Address:", cleanAddress);
-    console.log("APP ID:", process.env.NEXT_PUBLIC_PRIVY_APP_ID);
-    console.log("SECRET:", process.env.PRIVY_APP_SECRET);
-    console.log("SIGNING KEY:", process.env.PRIVY_SIGNING_KEY);
-    console.log("------------********------------");
-    console.log(
-      "KEY primeros 50 chars:",
-      process.env.PRIVY_SIGNING_KEY?.substring(0, 50),
-    );
-    console.log("------------********----------------");
+    console.log("--- LEND ---", { walletId, cleanAddress, amount });
 
     const parsedAmount = parseUnits(amount, 6);
 
@@ -96,32 +77,19 @@ export async function POST(req: Request) {
       args: [MORPHO_VAULT_ADDRESS as `0x${string}`, parsedAmount],
     });
 
-    const rawKey = process.env.PRIVY_SIGNING_KEY!.split("\\n").join("\n");
-    const body64 = rawKey
-      .replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\n/g, "")
-      .trim()
-      .match(/.{1,64}/g)!
-      .join("\n");
-    const pemKey = `-----BEGIN PRIVATE KEY-----\n${body64}\n-----END PRIVATE KEY-----`;
-    console.log("KEY tiene saltos AFTER:", pemKey.includes("\n"));
-    const approveTx = await privy
-      .wallets()
-      .ethereum()
-      .sendTransaction(walletId, {
-        caip2: "eip155:84532",
-        params: {
-          transaction: {
-            to: USDC_ADDRESS,
-            data: approveData,
-            chain_id: 84532,
-          },
-        },
-        authorization_context: {
-          authorization_private_keys: [pemKey],
-          user_jwts: [userJwt], // ← ambos juntos
-        },
-      });
-    // ✅ Esperar que el approve se mine antes de hacer el deposit
+    // ✅ walletApi.ethereum.sendTransaction — ethereum es PROPIEDAD, no función
+    const approveTx = await privy.walletApi.ethereum.sendTransaction({
+      walletId,
+      caip2: "eip155:84532",
+      transaction: {
+        to: USDC_ADDRESS,
+        data: approveData,
+        chainId: 84532,
+      },
+    });
+
+    console.log("Approve hash:", approveTx.hash);
+
     await publicClient.waitForTransactionReceipt({
       hash: approveTx.hash as `0x${string}`,
     });
@@ -130,22 +98,20 @@ export async function POST(req: Request) {
     const depositData = encodeFunctionData({
       abi: vaultAbi,
       functionName: "deposit",
-      args: [parsedAmount, userAddress as `0x${string}`],
+      args: [parsedAmount, cleanAddress as `0x${string}`],
     });
 
-    const depositTx = await privy
-      .wallets()
-      .ethereum()
-      .sendTransaction(walletId, {
-        caip2: "eip155:84532",
-        params: {
-          transaction: {
-            to: MORPHO_VAULT_ADDRESS,
-            data: depositData,
-            chain_id: 84532,
-          },
-        },
-      });
+    const depositTx = await privy.walletApi.ethereum.sendTransaction({
+      walletId,
+      caip2: "eip155:84532",
+      transaction: {
+        to: MORPHO_VAULT_ADDRESS,
+        data: depositData,
+        chainId: 84532,
+      },
+    });
+
+    console.log("Deposit hash:", depositTx.hash);
 
     return NextResponse.json({
       success: true,
@@ -153,7 +119,7 @@ export async function POST(req: Request) {
       depositHash: depositTx.hash,
     });
   } catch (error: any) {
-    console.error(error);
+    console.error("LEND ERROR:", error);
     return NextResponse.json(
       { error: error?.message || "Error en la transacción" },
       { status: 500 },
