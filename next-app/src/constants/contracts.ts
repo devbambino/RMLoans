@@ -12,9 +12,9 @@ export const CONTRACT_ADDRESSES = {
     mockMXNB: "0xF19D2F986DC0fb7E2A82cb9b55f7676967F7bC3E",
 
     // Wrapper & Vault Addresses
-    wmUSDC: "0xCa4625EA7F3363d7E9e3090f9a293b64229FE55B",
+    wmUSDC: "0xBDc7fCDAC92DEe5220215aB6a0f5E1B20A665CD4",
     morphoUSDCVault: "0xA694354Ab641DFB8C6fC47Ceb9223D12cCC373f9",
-    morphoMXNBVault: "0xd6a83595b11CCC94bCcde4c9654bcaa6D423896e",
+    morphoMXNBVault: "0x3F8FAB03021738f227e3Ad76da51f57522540d30",
 
     // Morpho Addresses
     morphoBlue: "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
@@ -26,7 +26,7 @@ export const CONTRACT_ADDRESSES = {
 
 export const MARKET_IDS = {
     usdc: "0x6af42641dd1ddc4fd0c3648e45497a29b78eb50d21fd0f6eac7b8eae2192dd47",
-    mxnb: "0xf912f62db71d01c572b28b6953c525851f9e0660df4e422cec986e620da726df",
+    mxnb: "0x8c9e372746f3d610f000b38783c39d03cf5b010c224bb581de0b7e9fc59af6c5",
 };
 
 // Morpho Blue Market Params Tuple
@@ -69,6 +69,8 @@ export const WMEMORY_ABI = [
     "function balanceOf(address account) external view returns (uint256)",
     "function approve(address spender, uint256 amount) external returns (bool)",
     "function allowance(address owner, address spender) external view returns (uint256)",
+    "function getInterestSubsidy(address user) external returns (uint256)",
+    "function redeemWithInterestSubsidy(uint256 shares, address receiver, address owner) external returns (uint256)",
 ];
 
 export const MORPHO_ABI = [

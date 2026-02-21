@@ -14,7 +14,7 @@ import {
 const TARGET_LTV = 0.70; // Conservative LTV target for calculation
 const USDC_DECIMALS = 6;
 const MXNB_DECIMALS = 6;
-const MANUAL_GAS_LIMIT = 500000n; // Fixed gas limit for testnet stability
+const MANUAL_GAS_LIMIT = 5000000n; // Fixed gas limit for testnet stability
 
 export const useMorphoLoan = () => {
     const { wallets } = useWallets();
@@ -160,7 +160,9 @@ export const useMorphoLoan = () => {
             const requiredCollateralWmUSDC = numerator / denominator;
 
             // Convert 18 decimals WmUSDC to 6 decimals USDC (approx 1 WmUSDC = 4 USDC)
-            const requiredUSDC = (requiredCollateralWmUSDC * 4n) / (10n ** 12n);
+            //const requiredUSDC = (requiredCollateralWmUSDC * 4n) / (10n ** 12n);
+            // Convert 18 decimals WmUSDC to 6 decimals USDC (approx 1 WmUSDC = 1 USDC)
+            const requiredUSDC = (requiredCollateralWmUSDC) / (10n ** 12n);
 
             // 20% buffer for UI estimation to be safe against vault fluctuations
             const withBuffer = requiredUSDC * 120n / 100n;
@@ -248,7 +250,7 @@ export const useMorphoLoan = () => {
 
             // 2. Convert to mUSDC required (6 decimals) using the Wrapper's actual conversion rate.
             // Create a dynamic instance with convertToAssets to handle the ~1:4 exchange rate securely.
-            const wmUSDCDynamic = new ethers.Contract(CONTRACT_ADDRESSES.wmUSDC, [
+            /*const wmUSDCDynamic = new ethers.Contract(CONTRACT_ADDRESSES.wmUSDC, [
                 ...WMEMORY_ABI,
                 "function convertToAssets(uint256) external view returns (uint256)"
             ], signer);
@@ -256,7 +258,10 @@ export const useMorphoLoan = () => {
             const requiredMUSDC = await wmUSDCDynamic.convertToAssets(requiredCollateralWmUSDC);
 
             // 3. Query Vault for exact USDC cost for these mUSDC shares
-            const exactRequiredUSDC = await morphoUSDCVault.convertToAssets(requiredMUSDC);
+            const exactRequiredUSDC = await morphoUSDCVault.convertToAssets(requiredMUSDC);*/
+
+            //3. With new wmusdc contract 1 WmUSDC = 1 USDC, always
+            const exactRequiredUSDC = requiredCollateralWmUSDC / (10n ** 12n);
 
             // 4. Apply 20% safety buffer on the REAL asset cost to absorb Vault fluctuations
             const depositAmountBN = exactRequiredUSDC * 120n / 100n;
@@ -471,6 +476,11 @@ export const useMorphoLoan = () => {
                 await tx1.wait();
                 await waitForAllowance(mxnb, userAddress, CONTRACT_ADDRESSES.morphoBlue, mxnbBalance);
             }
+
+            /*console.log(`Calculating subsidy ${debtAssets} MXNB (${borrowShares.toString()} shares)...`);
+            const interestTx = await wmUSDC.getInterestSubsidy(userAddress);
+            await interestTx.wait();
+            console.log(`✓ Interest tx confirmed (${interestTx.hash})`);*/
 
             // --- STEP 2: Repay Full Debt ---
             setStep(12);
