@@ -7,7 +7,7 @@ import { CheckCircleIcon, ArrowPathIcon, BanknotesIcon, CircleStackIcon, LockClo
 
 export default function PrestamoRapido() {
     const { authenticated, login } = usePrivy();
-    const { loading, step, error, txHash, usdcBalance, mxnbBalance, collateralBalance, borrowBalance, marketLiquidity, marketAPR, totalRepaidAmount, executeZale, executeRepayAndWithdraw, getSimulatedDeposit, resetState } = useMorphoLoan();
+    const { loading, step, error, txHash, usdcBalance, mxnbBalance, collateralBalance, borrowBalance, marketLiquidity, marketAPR, totalRepaidAmount, userPaidSubsidyInUSDC, userInterestInMxnb, executeZale, executeRepayAndWithdraw, getSimulatedDeposit, resetState } = useMorphoLoan();
 
     const [borrowAmount, setBorrowAmount] = useState("");
     const [requiredDeposit, setRequiredDeposit] = useState("0.00");
@@ -166,6 +166,24 @@ export default function PrestamoRapido() {
                                                 <span className="text-gray-400">Estado:</span>
                                                 <span className="text-green-400">Deuda Saldada</span>
                                             </div>
+                                            {parseFloat(userPaidSubsidyInUSDC || "0") > 0 && (
+                                                <>
+                                                    <div className="h-px bg-white/10 my-2" />
+                                                    <div className="text-center">
+                                                        <div className="text-xs text-purple-300 font-semibold mb-2 flex items-center justify-center gap-1">
+                                                            💰 Hemos subsidiado el interes del prestamo!!!
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-400">Subsidio recibido:</span>
+                                                        <span className="text-purple-300 font-mono">{userPaidSubsidyInUSDC} USDC</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-400">Equivalente en MXNB:</span>
+                                                        <span className="text-purple-300 font-mono">{userInterestInMxnb} MXNB</span>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
 
