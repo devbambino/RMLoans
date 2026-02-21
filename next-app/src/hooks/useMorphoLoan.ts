@@ -13,7 +13,7 @@ import {
     MARKET_IDS,
 } from '../constants/contracts';
 
-const TARGET_LTV = 0.70; // Conservative LTV target for calculation
+const TARGET_LTV = 0.50; // Conservative LTV target for calculation
 const USDC_DECIMALS = 6;
 const MXNB_DECIMALS = 6;
 const MANUAL_GAS_LIMIT = 5000000n; // Fixed gas limit for testnet stability
@@ -211,12 +211,12 @@ export const useMorphoLoan = () => {
             // Fallback if oracle not loaded: use conservative estimate
             // 8 MXNB is backed by 0.65 WmUSDC approx. => 1 WmUSDC = 12.307 MXNB
             const amount = parseFloat(borrowAmountMXNB);
-            const safePrice = 12.307; // MXNB per unit of collateral
+            const safePrice = 17; // MXNB per unit of collateral
             const requiredWmUSDC = amount / (TARGET_LTV * safePrice);
             // Convert WmUSDC to USDC approx (1 WmUSDC ≈ 4 USDC)
-            const requiredUSDCApprox = requiredWmUSDC * 4.0;
+            const requiredUSDCApprox = requiredWmUSDC;// * 4.0;
             // 20% buffer
-            return (requiredUSDCApprox * 1.2).toFixed(2);
+            return (requiredUSDCApprox).toFixed(2);
         }
 
         try {
@@ -236,7 +236,8 @@ export const useMorphoLoan = () => {
             const requiredUSDC = (requiredCollateralWmUSDC) / (10n ** 12n);
 
             // 20% buffer for UI estimation to be safe against vault fluctuations
-            const withBuffer = requiredUSDC * 120n / 100n;
+            //const withBuffer = requiredUSDC * 120n / 100n;
+            const withBuffer = requiredUSDC;
 
             return ethers.formatUnits(withBuffer, USDC_DECIMALS); // 6 decimals
         } catch (e) {
@@ -328,7 +329,7 @@ export const useMorphoLoan = () => {
             const currentPrice = await oracle.price();
 
             const borrowAmountBN = ethers.parseUnits(borrowAmountMXNB, MXNB_DECIMALS);
-            const TARGET_LTV_WAD = ethers.parseEther("0.70"); // 70% LTV Target
+            const TARGET_LTV_WAD = ethers.parseEther("0.50"); // 50% LTV Target
 
             // 1. Calculate required WmUSDC (18 decimals)
             // Scale 10^54 works correctly alongside Morpho's Oracle Price (scaled to 10^36 implicitly handling dec shift)
@@ -352,7 +353,7 @@ export const useMorphoLoan = () => {
             const exactRequiredUSDC = requiredCollateralWmUSDC / (10n ** 12n);
 
             // 4. Apply 20% safety buffer on the REAL asset cost to absorb Vault fluctuations
-            const depositAmountBN = exactRequiredUSDC * 120n / 100n;
+            const depositAmountBN = exactRequiredUSDC;// * 120n / 100n;
 
             console.log(`Calculated Deposit (Vault-based): ${ethers.formatUnits(depositAmountBN, USDC_DECIMALS)} USDC`);
 

@@ -23,7 +23,7 @@ function Home() {
             <section className="max-w-5xl mx-auto py-16 px-6">
               <div className="text-center mb-12">
                 <h2 className="text-4xl font-extrabold text-gray-400 tracking-tight">
-                  Welcome to <span className="text-indigo-400">RapiMoni</span>
+                  Welcome to <span className="text-indigo-400">RapiLoans by RapiMoni</span>
                 </h2>
                 <p className="mt-4 text-lg text-gray-200 max-w-2xl mx-auto">
                   A decentralized platform to manage your capital swiftly and securely.
@@ -69,7 +69,7 @@ function Home() {
       ) : (
         <section className="flex flex-col py-20 h-screen items-center gap-10">
           <div className="text-center">
-            <h2 className="text-4xl font-extrabold text-gray-400 tracking-tight">Welcome to RapiMoni</h2>
+            <h2 className="text-4xl font-extrabold text-gray-400 tracking-tight">Welcome to RapiLoans by RapiMoni</h2>
             <p className="mt-4 text-lg text-gray-200 max-w-2xl mx-auto">
               A decentralized platform to manage your capital swiftly and securely.
             </p>
