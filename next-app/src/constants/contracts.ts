@@ -71,6 +71,8 @@ export const WMEMORY_ABI = [
     "function allowance(address owner, address spender) external view returns (uint256)",
     "function getInterestSubsidy(address user) external returns (uint256)",
     "function redeemWithInterestSubsidy(uint256 shares, address receiver, address owner) external returns (uint256)",
+    "function userInterestSubsidyInWmUSDC(address) view returns (uint256)",
+    "function userInterestInMxnb(address) view returns (uint256)",
 ];
 
 export const MORPHO_ABI = [
