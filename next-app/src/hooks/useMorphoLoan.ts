@@ -34,6 +34,7 @@ export const useMorphoLoan = () => {
     const [oraclePrice, setOraclePrice] = useState<bigint>(0n);
     const [userPaidSubsidyInUSDC, setUserPaidSubsidyInUSDC] = useState<string>("0");
     const [userInterestInMxnb, setUserInterestInMxnb] = useState<string>("0");
+    const [userInterestInUSDC, setUserInterestInUSDC] = useState<string>("0");
 
     // Market data states for APR calculation
     const [totalSupplied, setTotalSupplied] = useState<number>(0);
@@ -635,10 +636,11 @@ export const useMorphoLoan = () => {
             setStep(16); // Complete Repay Flow
             const rawPaidSubsidyUSDC = await wmUSDC.userPaidSubsidyInUSDC(userAddress);
             const paidSubsidyUSDC = ethers.formatUnits(rawPaidSubsidyUSDC, 6);
-            console.log(`Paid Subsidy: ${paidSubsidyUSDC} USDC (${estimatedSubsidyMXNB} MXNB)`);
+            console.log(`Paid Subsidy: ${paidSubsidyUSDC} USDC (${estimatedSubsidyMXNB} MXNB, ${estimatedSubsidyUSDC})`);
             
             setUserPaidSubsidyInUSDC(paidSubsidyUSDC);
             setUserInterestInMxnb(estimatedSubsidyMXNB);
+            setUserInterestInUSDC(estimatedSubsidyUSDC);
 
             await refreshData();
             setLoading(false);
@@ -684,6 +686,7 @@ export const useMorphoLoan = () => {
         totalRepaidAmount,
         userPaidSubsidyInUSDC,
         userInterestInMxnb,
+        userInterestInUSDC,
         getSimulatedDeposit,
         executeZale,
         executeRepayAndWithdraw,

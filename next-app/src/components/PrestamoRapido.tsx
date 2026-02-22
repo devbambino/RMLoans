@@ -7,7 +7,7 @@ import { CheckCircleIcon, ArrowPathIcon, BanknotesIcon, CircleStackIcon, LockClo
 
 export default function PrestamoRapido() {
     const { authenticated, login } = usePrivy();
-    const { loading, step, error, txHash, usdcBalance, mxnbBalance, collateralBalance, borrowBalance, marketLiquidity, marketAPR, totalRepaidAmount, userPaidSubsidyInUSDC, userInterestInMxnb, executeZale, executeRepayAndWithdraw, getSimulatedDeposit, resetState } = useMorphoLoan();
+    const { loading, step, error, txHash, usdcBalance, mxnbBalance, collateralBalance, borrowBalance, marketLiquidity, marketAPR, totalRepaidAmount, userPaidSubsidyInUSDC, userInterestInMxnb, userInterestInUSDC, executeZale, executeRepayAndWithdraw, getSimulatedDeposit, resetState } = useMorphoLoan();
 
     const [borrowAmount, setBorrowAmount] = useState("");
     const [requiredDeposit, setRequiredDeposit] = useState("0.00");
@@ -175,12 +175,9 @@ export default function PrestamoRapido() {
                                                         </div>
                                                     </div>
                                                     <div className="flex justify-between">
-                                                        <span className="text-gray-400">Subsidy Received:</span>
-                                                        <span className="text-purple-300 font-mono">{userPaidSubsidyInUSDC} USDC</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">Equivalent in MXNB:</span>
-                                                        <span className="text-purple-300 font-mono">{userInterestInMxnb} MXNB</span>
+                                                        <span className="text-gray-400">We gave you:</span>
+                                                        <span className="text-purple-300 font-mono">{userInterestInMxnb} MXNB (~= {userInterestInUSDC})</span>
+                                                        <span className="text-xs text-purple-300 font-mono">(Approx. {userInterestInUSDC} USDC)</span>
                                                     </div>
                                                 </>
                                             )}
