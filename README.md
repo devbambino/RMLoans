@@ -1,8 +1,8 @@
 # RapiLoans 💰
 
-**Instant MXNB loans. Zero interest. Powered by Arbitrum.**
+**Instant MXNB loans. Zero interest. Powered by Base.**
 
-RapiLoans, by RapiMoni, enables users to access instant loans in MXNB (Bitso's Mexican Peso stablecoin) by collateralizing USDC, with **0% interest rates subsidized by the RapiLoans protocol**. Built on Arbitrum for speed, low costs, and accessibility to the Latin American market.
+RapiLoans, by RapiMoni, enables users to access instant loans in MXNB (Bitso's Mexican Peso stablecoin) by collateralizing USDC, with **0% interest rates subsidized by the RapiLoans protocol**. Built on Base for speed, low costs, and accessibility to the Latin American market.
 
 ---
 
@@ -25,7 +25,7 @@ RapiLoans provides:
 - ✅ **0% interest rate** — Ingeniously subsidized by capturing Morpho USDC yield from collateral
 - ⚡ **Instant liquidity** — Borrow MXNB in minutes, not days
 - 🔒 **Overcollateralization model** — Supply USDC, borrow MXNB with predictable liquidation mechanics
-- 🌐 **Non-custodial** — Users maintain full control via smart contracts on Arbitrum
+- 🌐 **Non-custodial** — Users maintain full control via smart contracts on Base
 - 📱 **Simple UX** — Intuitive web interface for wallet connection, collateral supply, and borrowing
 - 💎 **Sustainable model** — Lenders earn 6.5-9.5% APY; protocol revenue comes from yield spread, not user extraction
 
@@ -71,12 +71,12 @@ RapiLoans provides:
 | **KYC Required** | No | Yes | No |
 | **Local Currency** | MXNB | MXN + fees | Limited options |
 | **Non-Custodial** | Yes | No | Yes |
-| **Chain** | Arbitrum | N/A | Multiple / Expensive |
+| **Chain** | Base | N/A | Multiple / Expensive |
 
 ### Go-to-Market Strategy
 
 **Phase 1 (Launch):**
-- Target crypto traders on Arbitrum with $1K–$100K USDC collateral
+- Target crypto traders on Base with $1K–$100K USDC collateral
 - Partner with Bitso community for MXNB awareness
 - Airdrop incentives for early lenders/borrowers
 
@@ -116,7 +116,7 @@ RapiLoans provides:
 
 ### Technical Architecture
 
-**Built on Arbitrum with Morpho Blue:**
+**Built on Base with Morpho Blue:**
 
 - **Morpho USDC Vault** → Supply USDC, earn yield
 - **WmUSDC (ERC-4626 Wrapper)** → Non-rebasing collateral asset
@@ -124,7 +124,7 @@ RapiLoans provides:
 - **Custom Oracle** → USDC/MXNB price feed for safety
 - **Frontend UI** → Simple, non-custodial interface
 
-**Why Arbitrum?**
+**Why Base?**
 - ⚡ Low transaction costs (sub-cent)
 - 🚀 High throughput (40K+ TPS)
 - 🌱 Thriving DeFi ecosystem
@@ -135,7 +135,7 @@ RapiLoans provides:
 ## ✨ Key Features
 
 - ✅ **0% Interest Rate** — Subsidized by the protocol
-- ✅ **Instant Liquidity** — Borrow in minutes via Arbitrum's speed
+- ✅ **Instant Liquidity** — Borrow in minutes via Base's speed
 - ✅ **Yield-Bearing Collateral** — Earn while you borrow
 - ✅ **Rewards & Incentives** — Community-auditable smart contracts
 - ✅ **Non-Custodial** — Full control via smart contracts
@@ -256,7 +256,7 @@ This model is a **game-changing Go-to-Market strategy**:
 - TailwindCSS for styling
 
 **Infrastructure:**
-- Arbitrum Mainnet (official deployment chain)
+- Base Mainnet (official deployment chain)
 - The Graph for subgraph indexing
 - IPFS for decentralized storage
 
@@ -269,7 +269,7 @@ This model is a **game-changing Go-to-Market strategy**:
 - Node.js 18+
 - pnpm (recommended) or npm
 - MetaMask or compatible Web3 wallet
-- USDC and MXNB on Arbitrum Mainnet
+- USDC and MXNB on Base Mainnet
 
 ### Installation
 
@@ -295,7 +295,7 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### Deployment to Arbitrum Mainnet
+### Deployment to Base Mainnet
 
 You need to follow these steps:
 ```bash
@@ -378,16 +378,16 @@ Must remain > 1.0 to avoid liquidation
 
 ---
 
-## 🌐 Arbitrum Network Details
+## 🌐 Base Network Details
 
-**Official RapiLoans Chain:** Arbitrum Mainnet
+**Official RapiLoans Chain:** Base Mainnet
 
 - **Chain ID:** 42161
-- **RPC:** https://arb1.arbitrum.io/rpc
-- **Block Explorer:** https://arbiscan.io/
+- **RPC:** https://mainnet.base.org
+- **Block Explorer:** https://www.basescan.org/
 - **Gas Token:** ETH (native)
 
-**Why Arbitrum?**
+**Why Base?**
 - Ultra-low transaction fees (~$0.001)
 - Fast finality (sub-second)
 - EVM-compatible (deploy Ethereum contracts unchanged)
@@ -424,7 +424,7 @@ Must remain > 1.0 to avoid liquidation
 ## 🗺️ Roadmap
 
 **Q1 2026:**
-- ✅ Launch on Arbitrum Mainnet
+- ✅ Launch on Base Mainnet
 - ✅ Core USDC/MXNB market live
 - Target: $1M initial TVL
 
@@ -455,14 +455,14 @@ Must remain > 1.0 to avoid liquidation
 ## 🙏 Acknowledgments
 
 Built with ❤️ by the SemillaLabs team.  
-Powered by **Arbitrum**, **Morpho Blue** and Bitso/Juno
+Powered by **Base**, **Morpho Blue** and Bitso/Juno
 
 Special thanks to:
 - [Morpho Labs](https://morpho.org/) for the lending protocol
 - [Bitso](https://bitso.com/) for MXNB innovation
-- [Arbitrum Foundation](https://arbitrum.foundation/) for ecosystem support
+- [Base](https://www.base.dev/) for ecosystem support
 
 ---
 
-**Status:** 🚀 Ready for Arbitrum Mainnet  
+**Status:** 🚀 Ready for Base Mainnet  
 **Last Updated:** February 2026  
