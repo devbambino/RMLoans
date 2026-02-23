@@ -83,7 +83,7 @@ export const CustomToast: React.FC<CustomToastProps> = ({
       <div className={textClasses}>{message}</div>
       <button
         aria-label="Close"
-        className="flex h-[23px] w-9 items-center justify-center rounded-lg shrink-0 mt-0.5"
+        className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0 mt-0.5"
         onClick={() => toast.dismiss()}
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -112,11 +112,11 @@ export const showSuccessToast = (message: string) => {
     closeButton: false,
     icon: false,
     className: "bg-transparent shadow-none p-0 m-0",
-    style: { 
-      background: "transparent", 
+    style: {
+      background: "transparent",
       boxShadow: "none",
       width: "auto",
-      maxWidth: "none"
+      maxWidth: "none",
     },
   });
 };
@@ -133,12 +133,12 @@ export const showErrorToast = (message: string) => {
     closeButton: false,
     icon: false,
     className: "bg-transparent shadow-none p-0 m-0",
-    style: { 
-      background: "transparent", 
-      boxShadow: "none", 
+    style: {
+      background: "transparent",
+      boxShadow: "none",
       marginTop: 16,
       width: "auto",
-      maxWidth: "none"
+      maxWidth: "none",
     },
   });
 };
