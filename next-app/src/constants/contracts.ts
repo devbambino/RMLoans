@@ -8,7 +8,7 @@ export const BASE_SEPOLIA_CONFIG = {
 
 export const CONTRACT_ADDRESSES = {
   // Base Sepolia Token Addresses
-  usdc: "0x036cbd53842c5426634e7929541ec2318f3dcf7e",
+  usdc: "0xba50cd2a20f6da35d788639e581bca8d0b5d4d5f",
   mockMXNB: "0xF19D2F986DC0fb7E2A82cb9b55f7676967F7bC3E",
 
   // Wrapper & Vault Addresses
