@@ -2,22 +2,19 @@
 
 /* custom resets / variables go below */
 :root {
-  --background-light: #0a0a0a;
-  --foreground-light: #ededed;
-  --background-dark: #0a0a0a;
-  --foreground-dark: #ededed;
+  /* Colores */
+  --bg-primary: #0a0a0a;
+  --text-primary: #ffffff;
+  --text-secondary: #4fe3c3;
+  --border-color: #264c73;
+
+  /* Tipografía */
+  --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-@media (prefers-color-scheme: light) {
-  body {
-    background-color: var(--background-light);
-    color: var(--foreground-light);
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: var(--background-dark);
-    color: var(--foreground-dark);
-  }
+/* Aplicación base en tu CSS global */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-main);
 }

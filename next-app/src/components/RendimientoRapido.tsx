@@ -65,29 +65,29 @@ export default function RendimientoRapido() {
 
     return (
         <div className="w-full max-w-md mx-auto p-1">
-            <div className="relative overflow-hidden rounded-2xl bg-[#0a0a0a] border border-white/10 shadow-2xl backdrop-blur-xl">
+            <div className="relative overflow-hidden rounded-2xl bg-[#0a0a0a] border border-[#264c73] shadow-2xl backdrop-blur-xl">
                 {/* Header Background Gradient */}
-                <div className="absolute top-0 left-0 w-full h-28 bg-gradient-to-br from-indigo-900/40 via-purple-900/20 to-transparent pointer-events-none" />
+                <div className="absolute top-0 left-0 w-full h-28 pointer-events-none" />
 
                 <div className="relative p-6 sm:p-8">
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                            <h2 className="text-2xl w-fit mb-2 border-b-4 border-[#264c73] font-bold text-white">
                                 MXNB Yield
                             </h2>
-                            <p className="text-sm text-gray-500 mt-1">Provide liquidity and earn interest</p>
+                            <p className="text-sm font-bold text-[#4fe3c3] mt-1">Provide liquidity and earn interest</p>
                         </div>
-                        <div className="p-3 rounded-full bg-white/5 border border-white/10">
-                            <ChartBarIcon className="w-6 h-6 text-[#50e2c3]" />
+                        <div className="p-3 rounded-full bg-[#0a0a0a] border border-[#264c73]">
+                            <ChartBarIcon className="w-6 h-6 text-[#4fe3c3]" />
                         </div>
                     </div>
 
                     {!authenticated ? (
                         <div className="text-center py-12">
-                            <p className="text-gray-400 mb-6">Connect your wallet to get started</p>
+                            <p className="text-gray-200 mb-6">Connect your wallet to get started</p>
                             <button
                                 onClick={login}
-                                className="w-full cursor-pointer py-3 px-4 bg-gradient-to-r from-[#50e2c3] to-cyan-500 hover:from-[#40d2b3] hover:to-cyan-400 text-black font-semibold rounded-xl transition-all shadow-lg shadow-cyan-500/20"
+                                className="w-full cursor-pointer py-3 px-4 bg-[#264c73] hover:bg-[#4fe3c3] text-white hover:text-[#0a0a0a] font-semibold rounded-xl transition-all"
                             >
                                 Connect Wallet
                             </button>
@@ -95,36 +95,36 @@ export default function RendimientoRapido() {
                     ) : (
                         <>
                             {/* Balances Grid */}
-                            <div className="grid grid-cols-2 gap-2 mb-6 p-2 mt-14 bg-white/5 rounded-xl border border-white/10">
+                            <div className="grid grid-cols-2 gap-2 mb-6 p-2 mt-14 bg-[#0a0a0a] rounded-xl">
                                 {/* Row 1 */}
                                 <div className="text-center p-2">
-                                    <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
-                                        <WalletIcon className="w-3 h-3 text-[#50e2c3]" /> Available MXNB
+                                    <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
+                                        <WalletIcon className="w-3 h-3 text-[#4fe3c3]" /> Available MXNB
                                     </div>
-                                    <div className="font-mono text-xs text-[#50e2c3] truncate">{mxnbBalance} MXNB</div>
+                                    <div className="font-mono text-xs text-white truncate">{mxnbBalance} MXNB</div>
                                 </div>
-                                <div className="text-center p-2 border-l border-white/5">
-                                    <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
-                                        <CircleStackIcon className="w-3 h-3 text-purple-400" /> Your Liquidity
+                                <div className="text-center p-2 border-l border-[#264c73]">
+                                    <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
+                                        <CircleStackIcon className="w-3 h-3 text-[#4fe3c3]" /> Your Liquidity
                                     </div>
-                                    <div className="font-mono text-xs text-purple-300 truncate">{vaultAssetsBalance} MXNB</div>
+                                    <div className="font-mono text-xs text-gray-200 truncate">{vaultAssetsBalance} MXNB</div>
                                 </div>
 
                                 {/* Row 2 separator */}
-                                <div className="col-span-2 h-px bg-white/5 my-1" />
+                                <div className="col-span-2 h-px bg-[#264c73] my-1" />
 
                                 {/* Row 2 */}
                                 <div className="text-center p-2">
-                                    <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
-                                        <BanknotesIcon className="w-3 h-3 text-blue-400" /> TVL
+                                    <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
+                                        <BanknotesIcon className="w-3 h-3 text-[#4fe3c3]" /> TVL
                                     </div>
-                                    <div className="font-mono text-xs text-blue-300 truncate">{tvl} MXNB</div>
+                                    <div className="font-mono text-xs text-gray-200 truncate">{tvl} MXNB</div>
                                 </div>
-                                <div className="text-center p-2 border-l border-white/5">
-                                    <div className="text-[10px] uppercase text-gray-500 font-bold mb-1 flex items-center justify-center gap-1">
-                                        <ChartBarIcon className="w-3 h-3 text-yellow-400" /> APY
+                                <div className="text-center p-2 border-l border-[#264c73]">
+                                    <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
+                                        <ChartBarIcon className="w-3 h-3 text-[#4fe3c3]" /> APY
                                     </div>
-                                    <div className="font-mono text-xs text-yellow-300 truncate">{apy}%</div>
+                                    <div className="font-mono text-xs text-gray-200 truncate">{apy}%</div>
                                 </div>
                             </div>
 
@@ -132,19 +132,19 @@ export default function RendimientoRapido() {
                             {step === 4 && !loading ? (
                                 /* Success Screen (Deposit) */
                                 <div className="py-8 text-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
-                                    <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-green-500/20 border border-green-500/20">
-                                        <CheckCircleIcon className="w-10 h-10 text-green-400" />
+                                    <div className="w-20 h-20 bg-[#0a0a0a] rounded-full flex items-center justify-center mx-auto border border-[#4fe3c3]">
+                                        <CheckCircleIcon className="w-10 h-10 text-[#4fe3c3]" />
                                     </div>
                                     <div>
                                         <h3 className="text-2xl font-bold text-white mb-2">Deposit Successful!</h3>
-                                        <p className="text-gray-400">
+                                        <p className="text-gray-200">
                                             Your liquidity has been successfully added.
                                         </p>
                                     </div>
 
                                     <button
                                         onClick={handleReset}
-                                        className="w-full cursor-pointer py-4 px-6 bg-gradient-to-r from-[#50e2c3] to-cyan-500 hover:from-[#40d2b3] hover:to-cyan-400 text-black font-bold rounded-xl transition-all shadow-lg hover:shadow-cyan-500/30 transform hover:-translate-y-1"
+                                        className="w-full cursor-pointer py-4 px-6 bg-[#264c73] hover:bg-[#4fe3c3] text-white hover:text-[#0a0a0a] font-bold rounded-xl transition-all transform hover:-translate-y-1"
                                     >
                                         Make Another Deposit
                                     </button>
@@ -152,26 +152,26 @@ export default function RendimientoRapido() {
                             ) : step === 12 && !loading ? (
                                 /* Success Screen (Withdrawal) */
                                 <div className="py-8 text-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
-                                    <div className="w-20 h-20 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-purple-500/20 border border-purple-500/20">
-                                        <CheckCircleIcon className="w-10 h-10 text-purple-400" />
+                                    <div className="w-20 h-20 bg-[#0a0a0a] rounded-full flex items-center justify-center mx-auto border border-[#4fe3c3]">
+                                        <CheckCircleIcon className="w-10 h-10 text-[#4fe3c3]" />
                                     </div>
                                     <div>
                                         <h3 className="text-2xl font-bold text-white mb-2">Withdrawal Successful!</h3>
-                                        <div className="text-sm bg-white/5 p-4 rounded-lg space-y-2 text-left">
+                                        <div className="text-sm bg-[#0a0a0a] border border-[#264c73] p-4 rounded-lg space-y-2 text-left">
                                             <div className="flex justify-between">
-                                                <span className="text-gray-400">Total Withdrawn:</span>
+                                                <span className="text-gray-200">Total Withdrawn:</span>
                                                 <span className="text-white font-mono">{withdrawnAmount} MXNB</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-400">Yield Generated:</span>
-                                                <span className="text-green-400 font-mono">{yieldEarned || "0.00"} MXNB</span>
+                                                <span className="text-gray-200">Yield Generated:</span>
+                                                <span className="text-[#4fe3c3] font-mono">{yieldEarned || "0.00"} MXNB</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <button
                                         onClick={handleReset}
-                                        className="w-full cursor-pointer py-4 px-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-purple-500/30 transform hover:-translate-y-1"
+                                        className="w-full cursor-pointer py-4 px-6 bg-[#264c73] hover:bg-[#4fe3c3] text-white hover:text-[#0a0a0a] font-bold rounded-xl transition-all transform hover:-translate-y-1"
                                     >
                                         Back to Home
                                     </button>
@@ -181,7 +181,7 @@ export default function RendimientoRapido() {
                                 <div className="space-y-6 py-2">
                                     {!loading && (
                                         <div className="group">
-                                            <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wide">
+                                            <label className="block text-xs font-medium text-white mb-2 uppercase tracking-wide">
                                                 How much MXNB do you want to deposit?
                                             </label>
                                             <div className="relative">
@@ -190,20 +190,20 @@ export default function RendimientoRapido() {
                                                     value={depositAmount}
                                                     onChange={(e) => setDepositAmount(e.target.value)}
                                                     placeholder="0.00"
-                                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:border-[#50e2c3]/50 focus:ring-1 focus:ring-[#50e2c3]/50 transition-all placeholder:text-gray-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                    className="w-full bg-[#0a0a0a] border border-[#264c73] rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:border-[#4fe3c3] transition-all placeholder:text-gray-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                 />
                                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                                    <span className="text-sm font-semibold text-gray-400">MXNB</span>
+                                                    <span className="text-sm font-semibold text-gray-200">MXNB</span>
                                                     <button
                                                         onClick={() => setDepositAmount(mxnbBalance)}
-                                                        className="text-[10px] text-[#50e2c3] uppercase font-bold hover:underline"
+                                                        className="text-[10px] text-[#4fe3c3] uppercase font-bold hover:underline"
                                                     >
                                                         Max
                                                     </button>
                                                 </div>
                                             </div>
                                             {isInsufficientBalance && (
-                                                <div className="text-xs text-red-400 mt-2 flex items-center gap-1">
+                                                <div className="text-xs text-[#4fe3c3] mt-2 flex items-center gap-1">
                                                     ⚠️ Insufficient balance
                                                 </div>
                                             )}
@@ -213,7 +213,7 @@ export default function RendimientoRapido() {
                                     {/* Progress Stepper */}
                                     {loading && (
                                         <div className="space-y-3 py-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                            <div className="flex justify-between text-xs text-gray-400 uppercase tracking-widest mb-1">
+                                            <div className="flex justify-between text-xs text-gray-200 uppercase tracking-widest mb-1">
                                                 <span>
                                                     {step >= 11 ? "Processing Withdrawal..." : "Processing Deposit..."}
                                                 </span>
@@ -221,20 +221,20 @@ export default function RendimientoRapido() {
                                                     {step >= 11 ? "1 / 1" : `${Math.min(step, 3)} / 3`}
                                                 </span>
                                             </div>
-                                            <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                                            <div className="h-2 w-full bg-[#264c73] rounded-full overflow-hidden">
                                                 {step >= 11 ? (
                                                     <div
-                                                        className="h-full bg-gradient-to-r from-purple-500 to-pink-600 transition-all duration-500 ease-out animate-pulse"
+                                                        className="h-full bg-[#4fe3c3] transition-all duration-500 ease-out animate-pulse"
                                                         style={{ width: "100%" }}
                                                     />
                                                 ) : (
                                                     <div
-                                                        className="h-full bg-gradient-to-r from-[#50e2c3] to-cyan-500 transition-all duration-500 ease-out"
+                                                        className="h-full bg-[#4fe3c3] transition-all duration-500 ease-out"
                                                         style={{ width: `${(step / 3) * 100}%` }}
                                                     />
                                                 )}
                                             </div>
-                                            <p className={`text-center text-sm font-medium animate-pulse ${step >= 11 ? "text-purple-400" : "text-[#50e2c3]"}`}>
+                                            <p className={`text-center text-sm font-medium animate-pulse text-[#4fe3c3]`}>
                                                 {getStepLabel(step)}
                                             </p>
                                         </div>
@@ -242,7 +242,7 @@ export default function RendimientoRapido() {
 
                                     {/* Error Message */}
                                     {error && (
-                                        <div className="p-4 text-center rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-sm">
+                                        <div className="p-4 text-center rounded-xl bg-[#0a0a0a] border border-[#264c73] text-[#4fe3c3] text-sm">
                                             <p className="font-semibold text-center mb-1"> An error occurred while depositing </p>
                                             {error}
                                         </div>
@@ -253,10 +253,10 @@ export default function RendimientoRapido() {
                                         <button
                                             onClick={handleDeposit}
                                             disabled={!depositAmount || parseFloat(depositAmount) <= 0 || isInsufficientBalance}
-                                            className={`w-full cursor-pointer py-4 px-6 rounded-xl font-bold text-lg transition-all shadow-lg 
+                                            className={`w-full cursor-pointer py-4 px-6 rounded-xl font-bold text-lg transition-all 
                                                 ${(!depositAmount || parseFloat(depositAmount) <= 0 || isInsufficientBalance)
-                                                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                                                    : 'bg-gradient-to-r from-[#50e2c3] to-cyan-600 hover:from-[#40d2b3] hover:to-cyan-500 text-black shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:-translate-y-0.5'
+                                                    ? 'bg-[#0a0a0a] text-gray-200 border border-[#264c73] cursor-not-allowed'
+                                                    : 'bg-[#264c73] hover:bg-[#4fe3c3] text-white hover:text-[#0a0a0a] border border-[#264c73]'
                                                 }
                                             `}
                                         >
@@ -268,7 +268,7 @@ export default function RendimientoRapido() {
                                     {hasLiquidity && !loading && (
                                         <button
                                             onClick={handleWithdrawAll}
-                                            className="w-full mt-2 cursor-pointer py-3 px-6 rounded-xl font-bold text-sm text-gray-300 border border-white/10 hover:bg-white/5 transition-all"
+                                            className="w-full mt-2 cursor-pointer py-3 px-6 rounded-xl font-bold text-sm bg-[#0a0a0a] text-[#4fe3c3] border border-[#264c73] hover:bg-[#264c73] hover:text-white transition-all"
                                         >
                                             Withdraw All
                                         </button>

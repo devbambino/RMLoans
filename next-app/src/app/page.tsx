@@ -22,8 +22,8 @@ function Home() {
           <div>
             <section className="max-w-5xl mx-auto py-16 px-6">
               <div className="text-center mb-12">
-                <h2 className="text-4xl font-extrabold text-gray-400 tracking-tight">
-                  Welcome to <span className="text-indigo-400">RapiLoans by RapiMoni</span>
+                <h2 className="text-4xl font-extrabold text-white tracking-tight">
+                  Welcome to <span>RapiLoans by RapiMoni</span>
                 </h2>
                 <p className="mt-4 text-lg text-gray-200 max-w-2xl mx-auto">
                   A decentralized platform to manage your capital swiftly and securely.
@@ -32,33 +32,33 @@ function Home() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Borrow Card */}
-                <div className="group p-8 bg-gray-950 rounded-3xl border border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300">
+                <div className="group p-8 rounded-3xl border border-[#264c73] shadow-sm hover:shadow-xl transition-all duration-300">
                   <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-indigo-600 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-600 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-400 mb-3">Borrow</h3>
+                  <h3 className="text-2xl font-bold text-white mb-3">Borrow</h3>
                   <p className="text-gray-200 leading-relaxed mb-6">
                     Access immediate liquidity by depositing your assets as collateral. Fast loans, no intermediaries, and complete transparency.
                   </p>
-                  <Link href="/borrow" className="inline-flex items-center font-semibold text-indigo-600 hover:text-indigo-700">
+                  <Link href="/borrow" className="inline-flex items-center font-semibold text-[#4fe3c3] hover:text-white">
                     Request Loan <span className="ml-2">→</span>
                   </Link>
                 </div>
 
                 {/* Lend Card */}
-                <div className="group p-8 bg-gray-950 rounded-3xl border border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300">
+                <div className="group p-8 rounded-3xl border border-[#264c73] shadow-sm hover:shadow-xl transition-all duration-300">
                   <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-emerald-600 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-emerald-600 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-400 mb-3">Lend</h3>
+                  <h3 className="text-2xl font-bold text-white mb-3">Lend</h3>
                   <p className="text-gray-200 leading-relaxed mb-6">
                     Make your savings work for you. Provide liquidity to the protocol and generate passive income constantly and securely.
                   </p>
-                  <Link href="/lend" className="inline-flex items-center font-semibold text-emerald-600 hover:text-emerald-700">
+                  <Link href="/lend" className="inline-flex items-center font-semibold text-[#4fe3c3] hover:text-white">
                     Start Earning <span className="ml-2">→</span>
                   </Link>
                 </div>
