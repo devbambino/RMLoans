@@ -77,6 +77,9 @@ export async function POST(req: Request) {
       hash: approveTx.hash as `0x${string}`,
     });
 
+    // Wait for allowance to propagate on Base Sepolia
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
     // 2️⃣ DEPOSIT
     const depositData = encodeFunctionData({
       abi: vaultAbi,
