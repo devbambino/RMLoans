@@ -1,48 +1,56 @@
 // src/lib/privy-signer.ts
-// Firma requests a la API REST de Privy usando P-256 ECDSA
-// Sin dependencias externas — solo crypto nativo de Node.js
-
-import { createPrivateKey, createSign } from "crypto";
+import canonicalize from "canonicalize";
+import crypto from "crypto";
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID!;
 const PRIVY_APP_SECRET = process.env.PRIVY_APP_SECRET!;
 const PRIVY_BASE_URL = "https://api.privy.io";
 
-// Construye el PEM desde la env var (base64 sin headers)
-function buildPemKey(): string {
-  const raw = process.env.PRIVY_SIGNING_KEY ?? "";
-  // Si ya tiene headers PEM, extraer solo el body
-  const body = raw
-    .replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----/g, "")
-    .replace(/\\n/g, "")
-    .replace(/\n/g, "")
+function getAuthorizationSignature({
+  url,
+  body,
+}: {
+  url: string;
+  body: object;
+}): string {
+  const payload = {
+    version: 1,
+    method: "POST",
+    url,
+    body,
+    headers: {
+      "privy-app-id": PRIVY_APP_ID,
+    },
+  };
+
+  // RFC 8785 JSON canonicalization
+  const serializedPayload = canonicalize(payload) as string;
+  const serializedPayloadBuffer = Buffer.from(serializedPayload);
+
+  console.log("Canonicalized payload:", serializedPayload);
+
+  // Private key — remove "wallet-auth:" prefix if present
+  const rawKey = (process.env.PRIVY_SIGNING_KEY ?? "")
+    .replace("wallet-auth:", "")
     .trim();
-  const lines = body.match(/.{1,64}/g)?.join("\n") ?? body;
-  return `-----BEGIN PRIVATE KEY-----\n${lines}\n-----END PRIVATE KEY-----`;
+  const privateKeyAsPem = `-----BEGIN PRIVATE KEY-----\n${rawKey}\n-----END PRIVATE KEY-----`;
+  const privateKey = crypto.createPrivateKey({
+    key: privateKeyAsPem,
+    format: "pem",
+  });
+
+  // Sign with sha256 + base64
+  const signatureBuffer = crypto.sign(
+    "sha256",
+    serializedPayloadBuffer,
+    privateKey,
+  );
+  const signature = signatureBuffer.toString("base64");
+
+  console.log("Signature:", signature.slice(0, 30) + "...");
+  return signature;
 }
 
-// Genera el header privy-authorization-signature
-// Spec: sign SHA-256 of (method + path + body) with P-256 private key
-function generateAuthSignature(
-  method: string,
-  path: string,
-  body: string,
-): string {
-  const pemKey = buildPemKey();
-  const privateKey = createPrivateKey({ key: pemKey, format: "pem" });
-
-  // El payload a firmar es: method + path + body (concatenados)
-  const payload = `${method}${path}${body}`;
-
-  const sign = createSign("SHA256");
-  sign.update(payload);
-  sign.end();
-
-  // Privy espera la firma en base64
-  return sign.sign(privateKey, "base64");
-}
-
-// Llama a la API REST de Privy para ejecutar una transacción
 export async function privyRpc(
   walletId: string,
   caip2: string,
@@ -50,20 +58,20 @@ export async function privyRpc(
     to: string;
     data?: string;
     value?: string;
-    chain_id: number;
+    chain_id?: number;
   },
 ): Promise<{ hash: string }> {
-  const path = `/v1/wallets/${walletId}/rpc`;
-  const bodyObj = {
+  const url = `${PRIVY_BASE_URL}/v1/wallets/${walletId}/rpc`;
+
+  const body = {
     caip2,
     method: "eth_sendTransaction",
     params: { transaction },
   };
-  const bodyStr = JSON.stringify(bodyObj);
 
-  const signature = generateAuthSignature("POST", path, bodyStr);
+  const signature = getAuthorizationSignature({ url, body });
 
-  const response = await fetch(`${PRIVY_BASE_URL}${path}`, {
+  const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -73,15 +81,16 @@ export async function privyRpc(
         "Basic " +
         Buffer.from(`${PRIVY_APP_ID}:${PRIVY_APP_SECRET}`).toString("base64"),
     },
-    body: bodyStr,
+    body: JSON.stringify(body),
   });
 
+  const text = await response.text();
+  console.log(`Privy RPC response ${response.status}:`, text);
+
   if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Privy RPC error ${response.status}: ${err}`);
+    throw new Error(`Privy RPC error ${response.status}: ${text}`);
   }
 
-  const data = await response.json();
-  // Privy devuelve { data: { hash: "0x..." } }
+  const data = JSON.parse(text);
   return { hash: data?.data?.hash ?? data?.hash };
 }

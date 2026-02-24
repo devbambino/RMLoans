@@ -45,6 +45,11 @@ const vaultAbi = [
 ] as const;
 
 export async function POST(req: Request) {
+  console.log("ENV CHECK:", {
+    appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID?.slice(0, 8),
+    secret: process.env.PRIVY_APP_SECRET?.slice(0, 8),
+    signingKey: process.env.PRIVY_SIGNING_KEY?.slice(0, 20),
+  });
   try {
     const { walletId, userAddress, amount } = await req.json();
     if (!walletId || !userAddress || !amount)
