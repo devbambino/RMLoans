@@ -28,9 +28,11 @@ export default function PrestamoRapido() {
     // Steps for the stepper
     const steps = [
         "Approving USDC",
-        "Depositing in Vault",
-        "Approving mUSDC",
-        "Wrapping to WmUSDC",
+        "Depositing in Aave",
+        "Approving USDC para Vault",
+        "Depositando en Morpho Vault",
+        "Generando mUSDC",
+        "Envolviendo mUSDC",
         "Approving Collateral",
         "Depositing Collateral",
         "Requesting MXNB"
@@ -49,7 +51,7 @@ export default function PrestamoRapido() {
     };
 
     // Derived state for validation
-    const isExceedingLiquidity = borrowAmount && parseFloat(borrowAmount) > parseFloat(marketLiquidity);
+    const isExceedingLiquidity = Boolean(borrowAmount) && parseFloat(borrowAmount) > parseFloat(marketLiquidity);
     const isInsufficientBalance = parseFloat(usdcBalance) < parseFloat(requiredDeposit || "0");
 
     return (
@@ -128,7 +130,7 @@ export default function PrestamoRapido() {
                                 </div>
                             </div>
 
-                            {step === 8 ? (
+                            {step === 10 ? (
                                 <div className="py-8 text-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
                                     <div className="w-20 h-20 bg-[#0a0a0a] rounded-full flex items-center justify-center mx-auto border border-[#4fe3c3]">
                                         <CheckCircleIcon className="w-10 h-10 text-[#4fe3c3]" />
@@ -242,21 +244,21 @@ export default function PrestamoRapido() {
                                     {/* Progress Stepper (Visible when loading) */}
                                     {loading && (
                                         <div className="space-y-3 py-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                            {step < 10 ? (
+                                            {step < 11 ? (
                                                 <>
                                                     <div className="flex justify-between text-xs text-gray-200 uppercase tracking-widest mb-1">
                                                         <span>Processing Loan...</span>
-                                                        <span>{Math.min(step, 7)} / 7</span>
+                                                        <span>{Math.min(step, 9)} / 9</span>
                                                     </div>
                                                     <div className="h-2 w-full bg-[#264c73] rounded-full overflow-hidden">
                                                         <div
                                                             className="h-full bg-[#4fe3c3] transition-all duration-500 ease-out"
-                                                            style={{ width: `${(step / 7) * 100}%` }}
+                                                            style={{ width: `${(step / 9) * 100}%` }}
                                                         />
                                                     </div>
                                                     <p className="text-center text-sm text-[#4fe3c3] font-medium animate-pulse">
                                                         {step === 0 ? "Starting..." :
-                                                            step > 7 ? "Ready!" :
+                                                            step > 9 ? "Ready!" :
                                                                 steps[step - 1]}
                                                     </p>
                                                 </>
@@ -289,7 +291,7 @@ export default function PrestamoRapido() {
                                     )}
 
                                     {/* Success Message */}
-                                    {step === 8 && !loading && (
+                                    {step === 10 && !loading && (
                                         <div className="p-4 rounded-xl bg-[#0a0a0a] border border-[#264c73] text-[#4fe3c3] text-sm text-center">
                                             <CheckCircleIcon className="w-8 h-8 mx-auto mb-2 text-[#4fe3c3]" />
                                             <p className="font-bold text-lg">Loan Successful!</p>
@@ -315,7 +317,7 @@ export default function PrestamoRapido() {
                                                 <ArrowPathIcon className="w-5 h-5 animate-spin" />
                                                 Processing...
                                             </span>
-                                        ) : step === 8 ? (
+                                        ) : step === 10 ? (
                                             "Request Another Loan"
                                         ) : (
                                             "Deposit and Borrow"

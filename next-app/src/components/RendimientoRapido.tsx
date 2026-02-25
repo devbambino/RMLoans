@@ -51,9 +51,12 @@ export default function RendimientoRapido() {
     // Steps mapping
     const getStepLabel = (s: number) => {
         switch (s) {
-            case 1: return "Approving MXNB...";
-            case 2: return "Depositing in Vault...";
-            case 3: return "Confirming...";
+            case 1: return "Approving USDC for Aave...";
+            case 2: return "Depositing in Aave...";
+            case 3: return "Approving USDC for Vault...";
+            case 4: return "Depositando en Morpho Vault...";
+            case 5: return "Approving mUSDC...";
+            case 6: return "Envolviendo mUSDC...";
             case 11: return "Withdrawing Liquidity...";
             default: return "Processing...";
         }
@@ -61,7 +64,7 @@ export default function RendimientoRapido() {
 
     // Derived states
     const hasLiquidity = parseFloat(vaultAssetsBalance) > 0;
-    const isInsufficientBalance = depositAmount && parseFloat(depositAmount) > parseFloat(mxnbBalance);
+    const isInsufficientBalance = Boolean(depositAmount) && parseFloat(depositAmount) > parseFloat(mxnbBalance);
 
     return (
         <div className="w-full max-w-md mx-auto p-1">
@@ -129,7 +132,7 @@ export default function RendimientoRapido() {
                             </div>
 
                             {/* Main Content Area */}
-                            {step === 4 && !loading ? (
+                            {step === 7 && !loading ? (
                                 /* Success Screen (Deposit) */
                                 <div className="py-8 text-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
                                     <div className="w-20 h-20 bg-[#0a0a0a] rounded-full flex items-center justify-center mx-auto border border-[#4fe3c3]">
@@ -149,7 +152,7 @@ export default function RendimientoRapido() {
                                         Make Another Deposit
                                     </button>
                                 </div>
-                            ) : step === 12 && !loading ? (
+                            ) : step === 13 && !loading ? (
                                 /* Success Screen (Withdrawal) */
                                 <div className="py-8 text-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
                                     <div className="w-20 h-20 bg-[#0a0a0a] rounded-full flex items-center justify-center mx-auto border border-[#4fe3c3]">
@@ -218,7 +221,7 @@ export default function RendimientoRapido() {
                                                     {step >= 11 ? "Processing Withdrawal..." : "Processing Deposit..."}
                                                 </span>
                                                 <span>
-                                                    {step >= 11 ? "1 / 1" : `${Math.min(step, 3)} / 3`}
+                                                    {step >= 11 ? "1 / 1" : `${Math.min(step, 6)} / 6`}
                                                 </span>
                                             </div>
                                             <div className="h-2 w-full bg-[#264c73] rounded-full overflow-hidden">
@@ -230,7 +233,7 @@ export default function RendimientoRapido() {
                                                 ) : (
                                                     <div
                                                         className="h-full bg-[#4fe3c3] transition-all duration-500 ease-out"
-                                                        style={{ width: `${(step / 3) * 100}%` }}
+                                                        style={{ width: `${(step / 6) * 100}%` }}
                                                     />
                                                 )}
                                             </div>

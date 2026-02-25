@@ -16,6 +16,10 @@ export const CONTRACT_ADDRESSES = {
     morphoUSDCVault: "0xA694354Ab641DFB8C6fC47Ceb9223D12cCC373f9",
     morphoMXNBVault: "0x3F8FAB03021738f227e3Ad76da51f57522540d30",
 
+    // Aave
+    aavePool: "0x8bAB6d1b75f19e9eD9fCe8b9BD338844fF79aE27",
+    aUSDC: "0x10f1a9d11cdf50041f3f8cb7191cbe2f31750acc",
+
     // Morpho Addresses
     morphoBlue: "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
 
@@ -91,4 +95,9 @@ export const ORACLE_ABI = [
 
 export const IRM_ABI = [
     "function borrowRateView(tuple(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv) marketParams, tuple(uint128 totalSupplyAssets, uint128 totalSupplyShares, uint128 totalBorrowAssets, uint128 totalBorrowShares, uint128 lastUpdate, uint128 fee) marketStatus) external view returns (uint256)",
+];
+
+export const AAVE_ABI = [
+    "function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external",
+    "function withdraw(address asset, uint256 amount, address to) external returns (uint256)",
 ];

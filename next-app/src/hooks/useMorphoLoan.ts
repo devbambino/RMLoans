@@ -9,6 +9,7 @@ import {
     WMEMORY_ABI,
     MORPHO_ABI,
     IRM_ABI,
+    AAVE_ABI,
     MXNB_MARKET_PARAMS,
     MARKET_IDS,
 } from '../constants/contracts';
@@ -321,9 +322,11 @@ export const useMorphoLoan = () => {
 
             // Contracts
             const usdc = new ethers.Contract(CONTRACT_ADDRESSES.usdc, ERC20_ABI, signer);
-            const morphoUSDCVault = new ethers.Contract(CONTRACT_ADDRESSES.morphoUSDCVault, VAULT_ABI, signer);
+            const aavePool = new ethers.Contract(CONTRACT_ADDRESSES.aavePool, AAVE_ABI, signer);
+            const aUSDC = new ethers.Contract(CONTRACT_ADDRESSES.aUSDC, ERC20_ABI, signer);
             const wmUSDC = new ethers.Contract(CONTRACT_ADDRESSES.wmUSDC, WMEMORY_ABI, signer);
             const morpho = new ethers.Contract(CONTRACT_ADDRESSES.morphoBlue, MORPHO_ABI, signer);
+            const morphoUSDCVault = new ethers.Contract(CONTRACT_ADDRESSES.morphoUSDCVault, VAULT_ABI, signer);
 
             // Dynamic Calculation with Vault Conversion
             const oracle = new ethers.Contract(MXNB_MARKET_PARAMS.oracle, ["function price() external view returns (uint256)"], signer);
@@ -358,74 +361,96 @@ export const useMorphoLoan = () => {
 
             console.log(`Calculated Deposit (Vault-based): ${ethers.formatUnits(depositAmountBN, USDC_DECIMALS)} USDC`);
 
-            // --- STEP 1: Approve USDC for Morpho Vault ---
-            console.log("Step 1: Checking USDC Allowance");
-            const usdcAllowance = await usdc.allowance(userAddress, CONTRACT_ADDRESSES.morphoUSDCVault);
+            // --- STEP 1: Approve USDC for Aave ---
+            console.log("Step 1: Checking USDC Allowance for Aave");
+            const usdcAllowance = await usdc.allowance(userAddress, CONTRACT_ADDRESSES.aavePool);
             if (usdcAllowance < depositAmountBN) {
-                const tx = await usdc.approve(CONTRACT_ADDRESSES.morphoUSDCVault, ethers.MaxUint256, { gasLimit: MANUAL_GAS_LIMIT });
+                const tx = await usdc.approve(CONTRACT_ADDRESSES.aavePool, ethers.MaxUint256, { gasLimit: MANUAL_GAS_LIMIT });
                 setTxHash(tx.hash);
                 await tx.wait();
                 // Double Check
+                await waitForAllowance(usdc, userAddress, CONTRACT_ADDRESSES.aavePool, depositAmountBN);
+            }
+
+            // Capture initial aUSDC balance before deposit
+            const initialAUsdcBalance = await aUSDC.balanceOf(userAddress);
+
+            // --- STEP 2: Supply USDC to Aave (get aUSDC) ---
+            setStep(2);
+            console.log("Step 2: Supplying USDC to Aave");
+            const tx2 = await aavePool.supply(CONTRACT_ADDRESSES.usdc, depositAmountBN, userAddress, 0, { gasLimit: MANUAL_GAS_LIMIT });
+            setTxHash(tx2.hash);
+            await tx2.wait();
+
+            // Wait for aUSDC balance to increase
+            await waitForBalanceIncrease(aUSDC, userAddress, initialAUsdcBalance);
+            const aUsdcBalance = await aUSDC.balanceOf(userAddress);
+
+            // --- STEP 3: Approve USDC for Morpho Vault ---
+            setStep(3);
+            console.log("Step 3: Approving USDC to Morpho Vault");
+            const morphoVaultAllowance = await usdc.allowance(userAddress, CONTRACT_ADDRESSES.morphoUSDCVault);
+            if (morphoVaultAllowance < depositAmountBN) {
+                const tx3 = await usdc.approve(CONTRACT_ADDRESSES.morphoUSDCVault, ethers.MaxUint256, { gasLimit: MANUAL_GAS_LIMIT });
+                setTxHash(tx3.hash);
+                await tx3.wait();
                 await waitForAllowance(usdc, userAddress, CONTRACT_ADDRESSES.morphoUSDCVault, depositAmountBN);
             }
 
             // Capture initial mUSDC balance before deposit
             const initialMUsdcBalance = await morphoUSDCVault.balanceOf(userAddress);
 
-            // --- STEP 2: Deposit USDC into Morpho Vault (get mUSDC) ---
-            setStep(2);
-            console.log("Step 2: Depositing USDC");
-            const tx2 = await morphoUSDCVault.deposit(depositAmountBN, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
-            setTxHash(tx2.hash);
-            await tx2.wait();
+            // --- STEP 4: Deposit USDC to Morpho Vault (get mUSDC) ---
+            setStep(4);
+            console.log("Step 4: Deposit in Morpho Vault (getting mUSDC)");
+            const tx4 = await morphoUSDCVault.deposit(depositAmountBN, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
+            setTxHash(tx4.hash);
+            await tx4.wait();
 
             // Wait for mUSDC balance to increase
             await waitForBalanceIncrease(morphoUSDCVault, userAddress, initialMUsdcBalance);
+            const mUsdcBalance = await morphoUSDCVault.balanceOf(userAddress);
 
-            // Just-in-Time read
-            const musdcBalance = await morphoUSDCVault.balanceOf(userAddress);
-
-            // --- STEP 3: Approve mUSDC for Wrapper ---
-            setStep(3);
-            console.log("Step 3: Approving mUSDC");
-            // NOTE: Some vaults might not follow strict ERC20 allowance return if valid, but we try standard flow.
-            // If allowance check fails/is unpredictable, we just approve.
-            const tx3 = await morphoUSDCVault.approve(CONTRACT_ADDRESSES.wmUSDC, ethers.MaxUint256, { gasLimit: MANUAL_GAS_LIMIT });
-            setTxHash(tx3.hash);
-            await tx3.wait();
-            await waitForAllowance(morphoUSDCVault, userAddress, CONTRACT_ADDRESSES.wmUSDC, musdcBalance);
+            // --- STEP 5: Approve mUSDC for Wrapper ---
+            setStep(5);
+            console.log("Step 5: Approving mUSDC for Wrapper");
+            const wrapperAllowance = await morphoUSDCVault.allowance(userAddress, CONTRACT_ADDRESSES.wmUSDC);
+            if (wrapperAllowance < mUsdcBalance) {
+                const tx5 = await morphoUSDCVault.approve(CONTRACT_ADDRESSES.wmUSDC, ethers.MaxUint256, { gasLimit: MANUAL_GAS_LIMIT });
+                setTxHash(tx5.hash);
+                await tx5.wait();
+                await waitForAllowance(morphoUSDCVault, userAddress, CONTRACT_ADDRESSES.wmUSDC, mUsdcBalance);
+            }
 
             // Capture initial WmUSDC balance before wrap
             const initialWmUsdcBalance = await wmUSDC.balanceOf(userAddress);
 
-            // --- STEP 4: Wrap mUSDC -> WmUSDC ---
-            setStep(4);
-            console.log("Step 4: Wrapping mUSDC");
-            const tx4 = await wmUSDC.deposit(musdcBalance, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
-            setTxHash(tx4.hash);
-            await tx4.wait();
+            // --- STEP 6: Wrap mUSDC -> WmUSDC ---
+            setStep(6);
+            console.log("Step 6: Wrapping mUSDC to wmUSDC");
+            const tx6 = await wmUSDC.deposit(mUsdcBalance, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
+            setTxHash(tx6.hash);
+            await tx6.wait();
 
             // Wait for WmUSDC balance to increase
             await waitForBalanceIncrease(wmUSDC, userAddress, initialWmUsdcBalance);
 
-            // Just-in-Time read
+            // --- STEP 7: Approve WmUSDC for Morpho Blue ---
+            setStep(7);
+            console.log("Step 7: Approving WmUSDC for Morpho Blue");
             const wmusdcBalance = await wmUSDC.balanceOf(userAddress);
-
-            // --- STEP 5: Approve WmUSDC for Morpho Blue ---
-            setStep(5);
-            console.log("Step 5: Approving WmUSDC");
             const wmusdcAllowance = await wmUSDC.allowance(userAddress, CONTRACT_ADDRESSES.morphoBlue);
             if (wmusdcAllowance < wmusdcBalance) {
-                const tx5 = await wmUSDC.approve(CONTRACT_ADDRESSES.morphoBlue, ethers.MaxUint256, { gasLimit: MANUAL_GAS_LIMIT });
-                setTxHash(tx5.hash);
-                await tx5.wait();
+                const tx7 = await wmUSDC.approve(CONTRACT_ADDRESSES.morphoBlue, ethers.MaxUint256, { gasLimit: MANUAL_GAS_LIMIT });
+                setTxHash(tx7.hash);
+                await tx7.wait();
             }
             // Strict check before proceeding to supply
             await waitForAllowance(wmUSDC, userAddress, CONTRACT_ADDRESSES.morphoBlue, wmusdcBalance);
 
-            // --- STEP 6: Supply Collateral ---
-            setStep(6);
-            console.log("Step 6: Supplying Collateral");
+            // --- STEP 8: Supply Collateral ---
+            setStep(8);
+            console.log("Step 8: Supplying Collateral");
 
             // Fresh Balance Read - We supply EVERYTHING we have/wrapped to ensure max safety
             const currentWmUSDCBalance = await wmUSDC.balanceOf(userAddress);
@@ -462,7 +487,7 @@ export const useMorphoLoan = () => {
             console.log("Sending supplyCollateral transaction...");
             // CRITICAL FIX: Supply ALL available WmUSDC, not just a calculated fraction.
             // This aligns with the POC logic: "Supply whatever you have".
-            const tx6 = await morpho.supplyCollateral(
+            const tx8 = await morpho.supplyCollateral(
                 MXNB_MARKET_PARAMS_ARRAY,
                 currentWmUSDCBalance,
                 userAddress,
@@ -470,19 +495,19 @@ export const useMorphoLoan = () => {
                 { gasLimit: MANUAL_GAS_LIMIT }
             );
 
-            setTxHash(tx6.hash);
-            await tx6.wait();
+            setTxHash(tx8.hash);
+            await tx8.wait();
 
-            // --- STEP 7: Borrow MXNB ---
-            setStep(7);
-            console.log("Step 7: Borrowing MXNB");
+            // --- STEP 9: Borrow MXNB ---
+            setStep(9);
+            console.log("Step 9: Borrowing MXNB");
 
             // Check max borrowable or assume calculated logic is mostly correct but handle potential revert from healthy factor
-            const tx7 = await morpho.borrow(MXNB_MARKET_PARAMS_ARRAY, borrowAmountBN, 0, userAddress, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
-            setTxHash(tx7.hash);
-            await tx7.wait();
+            const tx9 = await morpho.borrow(MXNB_MARKET_PARAMS_ARRAY, borrowAmountBN, 0, userAddress, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
+            setTxHash(tx9.hash);
+            await tx9.wait();
 
-            setStep(8); // Complete
+            setStep(10); // Complete
             await refreshData();
 
             setLoading(false); // Ensure loading is false on success
@@ -500,10 +525,10 @@ export const useMorphoLoan = () => {
             setError(msg);
             // Auto-reset handled by useEffect
         } finally {
-            // Safety check: if we are not at step 8 (success) and no error was caught (shouldn't happen due to catch),
+            // Safety check: if we are not at step 10 (success) and no error was caught (shouldn't happen due to catch),
             // or if we just want to ensure loading is off if something weird happened.
             // But we handled success case above.
-            if (step !== 8 && step < 10) {
+            if (step !== 10 && step < 11) {
                 setLoading(false);
             }
         }
@@ -523,7 +548,8 @@ export const useMorphoLoan = () => {
             const mxnb = new ethers.Contract(CONTRACT_ADDRESSES.mockMXNB, ERC20_ABI, signer);
             const morpho = new ethers.Contract(CONTRACT_ADDRESSES.morphoBlue, MORPHO_ABI, signer);
             const wmUSDC = new ethers.Contract(CONTRACT_ADDRESSES.wmUSDC, WMEMORY_ABI, signer);
-            const morphoUSDCVault = new ethers.Contract(CONTRACT_ADDRESSES.morphoUSDCVault, VAULT_ABI, signer);
+            const aavePool = new ethers.Contract(CONTRACT_ADDRESSES.aavePool, AAVE_ABI, signer);
+            const aUSDC = new ethers.Contract(CONTRACT_ADDRESSES.aUSDC, ERC20_ABI, signer);
 
             // Construct Tuple Array explicitly
             const MXNB_MARKET_PARAMS_ARRAY = [
@@ -606,13 +632,13 @@ export const useMorphoLoan = () => {
                 await waitForBalanceIncrease(wmUSDC, userAddress, initialWmUsdcBalance);
             }
 
-            // --- STEP 4: Unwrap WmUSDC -> mUSDC ---
+            // --- STEP 4: Unwrap WmUSDC -> aUSDC ---
             setStep(14);
-            console.log("Step 4 (Repay): Unwrap WmUSDC");
+            console.log("Step 4 (Repay): Unwrap WmUSDC to aUSDC");
 
             // Re-read strictly updated balance
             const wmusdcBalance = await wmUSDC.balanceOf(userAddress);
-            const initialMUsdcBalance = await morphoUSDCVault.balanceOf(userAddress);
+            const initialAUsdcBalance = await aUSDC.balanceOf(userAddress);
 
             if (wmusdcBalance > 0n) {
                 const tx4 = await wmUSDC.redeemWithInterestSubsidy(wmusdcBalance, userAddress, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
@@ -620,15 +646,15 @@ export const useMorphoLoan = () => {
                 await tx4.wait();
 
                 // Wait for balance to index
-                await waitForBalanceIncrease(morphoUSDCVault, userAddress, initialMUsdcBalance);
+                await waitForBalanceIncrease(aUSDC, userAddress, initialAUsdcBalance);
             }
 
-            // --- STEP 5: Redeem mUSDC -> USDC ---
+            // --- STEP 5: Withdraw from Aave -> USDC ---
             setStep(15);
-            console.log("Step 5 (Repay): Redeem mUSDC");
-            const musdcBalance = await morphoUSDCVault.balanceOf(userAddress);
-            if (musdcBalance > 0n) {
-                const tx5 = await morphoUSDCVault.redeem(musdcBalance, userAddress, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
+            console.log("Step 5 (Repay): Withdraw aUSDC from Aave");
+            const aUsdcBalance = await aUSDC.balanceOf(userAddress);
+            if (aUsdcBalance > 0n) {
+                const tx5 = await aavePool.withdraw(CONTRACT_ADDRESSES.usdc, aUsdcBalance, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
                 setTxHash(tx5.hash);
                 await tx5.wait();
             }
@@ -637,7 +663,7 @@ export const useMorphoLoan = () => {
             const rawPaidSubsidyUSDC = await wmUSDC.userPaidSubsidyInUSDC(userAddress);
             const paidSubsidyUSDC = ethers.formatUnits(rawPaidSubsidyUSDC, 6);
             console.log(`Paid Subsidy: ${paidSubsidyUSDC} USDC (${estimatedSubsidyMXNB} MXNB, ${estimatedSubsidyUSDC})`);
-            
+
             setUserPaidSubsidyInUSDC(paidSubsidyUSDC);
             setUserInterestInMxnb(estimatedSubsidyMXNB);
             setUserInterestInUSDC(estimatedSubsidyUSDC);
