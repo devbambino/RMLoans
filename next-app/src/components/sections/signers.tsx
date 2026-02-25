@@ -1,3 +1,4 @@
+//src/components/sections/signers.tsx
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -35,7 +36,9 @@ const Signers = () => {
 
   const handleAddSigners = async () => {
     if (!signerId) {
-      showErrorToast("Please add NEXT_PUBLIC_PRIVY_SIGNER_ID to your .env file");
+      showErrorToast(
+        "Please add NEXT_PUBLIC_PRIVY_SIGNER_ID to your .env file",
+      );
       return;
     }
     if (!selectedWallet) {
@@ -110,7 +113,7 @@ const Signers = () => {
             value={selectedWallet?.address || ""}
             onChange={(e) => {
               const wallet = allWallets.find(
-                (w) => w.address === e.target.value
+                (w) => w.address === e.target.value,
               );
               setSelectedWallet(wallet || null);
             }}

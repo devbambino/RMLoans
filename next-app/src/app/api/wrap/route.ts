@@ -69,6 +69,9 @@ export async function POST(req: Request) {
       hash: approveTx.hash as `0x${string}`,
     });
 
+    // Wait for allowance to propagate
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
     // 2. Wrap mUSDC → WmUSDC
     const wrapData = encodeFunctionData({
       abi: wmUsdcAbi,
