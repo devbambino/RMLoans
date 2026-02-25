@@ -296,7 +296,7 @@ export const useMorphoLoan = () => {
             if (currentBalance > initialBalance) return currentBalance;
 
             console.log(`Waiting for subsidy update... Attempt ${retries + 1}/15`);
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 2s
+            await new Promise(resolve => setTimeout(resolve, 2500)); // Wait 2.5s
             retries++;
         }
         throw new Error("RPC timeout: The network is slow indexing your new subsidy. Please wait a moment and try again.");
