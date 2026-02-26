@@ -7,7 +7,7 @@ import { CheckCircleIcon, ArrowPathIcon, BanknotesIcon, CircleStackIcon, LockClo
 
 export default function PrestamoRapido() {
     const { authenticated, login } = usePrivy();
-    const { loading, step, error, txHash, usdcBalance, mxnbBalance, collateralBalance, borrowBalance, marketLiquidity, marketAPR, totalRepaidAmount, userPaidSubsidyInUSDC, userInterestInMxnb, userInterestInUSDC, executeZale, executeRepayAndWithdraw, getSimulatedDeposit, resetState } = useMorphoLoan();
+    const { loading, step, error, txHash, usdcBalance, ccopBalance, collateralBalance, borrowBalance, marketLiquidity, marketAPR, totalRepaidAmount, executeZale, executeRepayAndWithdraw, getSimulatedDeposit, resetState } = useMorphoLoan();
 
     const [borrowAmount, setBorrowAmount] = useState("");
     const [requiredDeposit, setRequiredDeposit] = useState("0.00");
@@ -29,21 +29,19 @@ export default function PrestamoRapido() {
     const steps = [
         "Approving USDC",
         "Depositing in Aave",
-        "Approving USDC para Vault",
-        "Depositando en Morpho Vault",
-        "Generando mUSDC",
-        "Envolviendo mUSDC",
+        "Approving aUSDC to Vault",
+        "Depositing in waUSDC",
         "Approving Collateral",
         "Depositing Collateral",
-        "Requesting MXNB"
+        "Requesting CCOP"
     ];
 
     const getRepayStepLabel = (s: number) => {
         switch (s) {
-            case 11: return "Verifying MXNB...";
+            case 11: return "Verifying CCOP...";
             case 12: return "Paying Debt...";
             case 13: return "Withdrawing Collateral...";
-            case 14: return "Unwrapping WmUSDC...";
+            case 14: return "Unwrapping waUSDC...";
             case 15: return "Recovering USDC...";
             case 16: return "Completed!";
             default: return "Processing...";
@@ -66,7 +64,7 @@ export default function PrestamoRapido() {
                             <h2 className="text-2xl mb-2 border-b-4 border-[#264c73] font-bold text-white">
                                 Quick Loan
                             </h2>
-                            <p className="text-sm font-bold text-[#4fe3c3] mt-1">Get MXNB instantly</p>
+                            <p className="text-sm font-bold text-[#4fe3c3] mt-1">Get CCOP instantly</p>
                         </div>
                         <div className="p-3 rounded-full bg-[#0a0a0a] border border-[#264c73]">
                             <BanknotesIcon className="w-6 h-6 text-[#4fe3c3]" />
@@ -96,15 +94,15 @@ export default function PrestamoRapido() {
                                 </div>
                                 <div className="text-center border-l border-[#264c73]">
                                     <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
-                                        <BanknotesIcon className="w-3 h-3 text-[#4fe3c3]" /> MXNB
+                                        <BanknotesIcon className="w-3 h-3 text-[#4fe3c3]" /> CCOP
                                     </div>
-                                    <div className="font-mono text-xs text-white truncate">{mxnbBalance} MXNB</div>
+                                    <div className="font-mono text-xs text-white truncate">{ccopBalance} CCOP</div>
                                 </div>
                                 <div className="text-center border-l border-[#264c73]">
                                     <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
                                         <LockClosedIcon className="w-3 h-3 text-[#4fe3c3]" /> Collateral
                                     </div>
-                                    <div className="font-mono text-xs text-gray-200 truncate">{collateralBalance} WmUSDC</div>
+                                    <div className="font-mono text-xs text-gray-200 truncate">{collateralBalance} waUSDC</div>
                                 </div>
 
                                 {/* Row 2 (New Stats) */}
@@ -114,7 +112,7 @@ export default function PrestamoRapido() {
                                     <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
                                         <CreditCardIcon className="w-3 h-3 text-[#4fe3c3]" /> Current Debt
                                     </div>
-                                    <div className="font-mono text-xs text-gray-200 truncate">{borrowBalance} MXNB</div>
+                                    <div className="font-mono text-xs text-gray-200 truncate">{borrowBalance} CCOP</div>
                                 </div>
                                 <div className="text-center border-l border-[#264c73]">
                                     <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
@@ -126,11 +124,11 @@ export default function PrestamoRapido() {
                                     <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
                                         <CircleStackIcon className="w-3 h-3 text-[#4fe3c3]" /> Liquidity
                                     </div>
-                                    <div className="font-mono text-xs text-gray-200 truncate">{marketLiquidity} MXNB</div>
+                                    <div className="font-mono text-xs text-gray-200 truncate">{marketLiquidity} CCOP</div>
                                 </div>
                             </div>
 
-                            {step === 10 ? (
+                            {step === 8 ? (
                                 <div className="py-8 text-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
                                     <div className="w-20 h-20 bg-[#0a0a0a] rounded-full flex items-center justify-center mx-auto border border-[#4fe3c3]">
                                         <CheckCircleIcon className="w-10 h-10 text-[#4fe3c3]" />
@@ -138,7 +136,7 @@ export default function PrestamoRapido() {
                                     <div>
                                         <h3 className="text-2xl font-bold text-white mb-2">Operation Successful!</h3>
                                         <p className="text-gray-200">
-                                            You received <span className="text-[#4fe3c3] font-bold text-lg">{borrowAmount} MXNB</span>
+                                            You received <span className="text-[#4fe3c3] font-bold text-lg">{borrowAmount} CCOP</span>
                                         </p>
                                     </div>
 
@@ -162,27 +160,12 @@ export default function PrestamoRapido() {
                                         <div className="text-sm bg-[#0a0a0a] border border-[#264c73] p-4 rounded-lg space-y-2 text-left">
                                             <div className="flex justify-between">
                                                 <span className="text-gray-200">Total Paid:</span>
-                                                <span className="text-white font-mono">{totalRepaidAmount || "Calculating..."} MXNB</span>
+                                                <span className="text-white font-mono">{totalRepaidAmount || "Calculating..."} CCOP</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-200">Status:</span>
                                                 <span className="text-[#4fe3c3]">Debt Settled</span>
                                             </div>
-                                            {parseFloat(userPaidSubsidyInUSDC || "0") > 0 && (
-                                                <>
-                                                    <div className="h-px bg-[#264c73] my-2" />
-                                                    <div className="text-center">
-                                                        <div className="text-xs text-[#4fe3c3] font-semibold mb-2 flex items-center justify-center gap-1">
-                                                            💰 We've subsidized your loan interest!!!
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-200">We gave you:</span>
-                                                        <span className="text-white font-mono">{userInterestInMxnb} MXNB (~= {userInterestInUSDC})</span>
-                                                        <span className="text-xs text-gray-200 font-mono">(Approx. {userInterestInUSDC} USDC)</span>
-                                                    </div>
-                                                </>
-                                            )}
                                         </div>
                                     </div>
 
@@ -201,7 +184,7 @@ export default function PrestamoRapido() {
                                 <div className="space-y-6 py-6">
                                     <div className="group">
                                         <label className="block text-xs font-medium text-white mb-2 uppercase tracking-wide">
-                                            How much MXNB do you want to receive?
+                                            How much CCOP do you want to receive?
                                         </label>
                                         <div className="relative">
                                             <input
@@ -213,7 +196,7 @@ export default function PrestamoRapido() {
                                                 disabled={loading}
                                             />
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                                <span className="text-sm font-semibold text-gray-200">MXNB</span>
+                                                <span className="text-sm font-semibold text-gray-200">CCOP</span>
                                             </div>
                                         </div>
                                     </div>
@@ -248,17 +231,17 @@ export default function PrestamoRapido() {
                                                 <>
                                                     <div className="flex justify-between text-xs text-gray-200 uppercase tracking-widest mb-1">
                                                         <span>Processing Loan...</span>
-                                                        <span>{Math.min(step, 9)} / 9</span>
+                                                        <span>{Math.min(step, 7)} / 7</span>
                                                     </div>
                                                     <div className="h-2 w-full bg-[#264c73] rounded-full overflow-hidden">
                                                         <div
                                                             className="h-full bg-[#4fe3c3] transition-all duration-500 ease-out"
-                                                            style={{ width: `${(step / 9) * 100}%` }}
+                                                            style={{ width: `${(step / 7) * 100}%` }}
                                                         />
                                                     </div>
                                                     <p className="text-center text-sm text-[#4fe3c3] font-medium animate-pulse">
                                                         {step === 0 ? "Starting..." :
-                                                            step > 9 ? "Ready!" :
+                                                            step > 7 ? "Ready!" :
                                                                 steps[step - 1]}
                                                     </p>
                                                 </>
@@ -291,11 +274,11 @@ export default function PrestamoRapido() {
                                     )}
 
                                     {/* Success Message */}
-                                    {step === 10 && !loading && (
+                                    {step === 8 && !loading && (
                                         <div className="p-4 rounded-xl bg-[#0a0a0a] border border-[#264c73] text-[#4fe3c3] text-sm text-center">
                                             <CheckCircleIcon className="w-8 h-8 mx-auto mb-2 text-[#4fe3c3]" />
                                             <p className="font-bold text-lg">Loan Successful!</p>
-                                            <p className="text-gray-200">You received {borrowAmount} MXNB.</p>
+                                            <p className="text-gray-200">You received {borrowAmount} CCOP.</p>
                                         </div>
                                     )}
 
@@ -317,7 +300,7 @@ export default function PrestamoRapido() {
                                                 <ArrowPathIcon className="w-5 h-5 animate-spin" />
                                                 Processing...
                                             </span>
-                                        ) : step === 10 ? (
+                                        ) : step === 8 ? (
                                             "Request Another Loan"
                                         ) : (
                                             "Deposit and Borrow"

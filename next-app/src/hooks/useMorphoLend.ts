@@ -2,27 +2,24 @@ import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { useWallets } from '@privy-io/react-auth';
 import {
+    BASE_SEPOLIA_CONFIG,
     CONTRACT_ADDRESSES,
     ERC20_ABI,
-    WMEMORY_ABI,
+    VAULT_ABI,
     MORPHO_ABI,
     IRM_ABI,
-    AAVE_ABI,
     MXNB_MARKET_PARAMS,
     MARKET_IDS,
-    VAULT_ABI,
 } from '../constants/contracts';
 
-const USDC_DECIMALS = 6;
-const MANUAL_GAS_LIMIT = 5000000n; // Increased gas limit to be safe for multiple txs
+const MXNB_DECIMALS = 6;
+const MANUAL_GAS_LIMIT = 500000n;
 
-// Extend WMEMORY_ABI to include totalAssets if possible
-const EXTENDED_WMEMORY_ABI = [
-    ...WMEMORY_ABI,
+// Extend VAULT_ABI to include totalAssets which was missing in the constants
+const EXTENDED_VAULT_ABI = [
+    ...VAULT_ABI,
     "function totalAssets() external view returns (uint256)",
-    "function previewRedeem(uint256 shares) external view returns (uint256 assets)",
-    "function convertToAssets(uint256 shares) external view returns (uint256)",
-    "function decimals() external view returns (uint8)"
+    "function previewRedeem(uint256 shares) external view returns (uint256 assets)"
 ];
 
 export const useMorphoLend = () => {
@@ -37,9 +34,9 @@ export const useMorphoLend = () => {
     const [yieldEarned, setYieldEarned] = useState<string | null>(null);
 
     // Data States
-    const [usdcBalance, setUsdcBalance] = useState<string>("0.000");
-    const [wrapperSharesBalance, setWrapperSharesBalance] = useState<string>("0.000");
-    const [wrapperAssetsBalance, setWrapperAssetsBalance] = useState<string>("0.000");
+    const [mxnbBalance, setMxnbBalance] = useState<string>("0.000");
+    const [vaultSharesBalance, setVaultSharesBalance] = useState<string>("0.000");
+    const [vaultAssetsBalance, setVaultAssetsBalance] = useState<string>("0.000");
     const [tvl, setTvl] = useState<string>("0.000");
     const [apy, setApy] = useState<number>(0);
 
@@ -77,16 +74,10 @@ export const useMorphoLend = () => {
                 signer
             );
 
-            // Read market details - fallback to mxnb if usdc fails just to have some rate to show
-            let marketDetailsToUse;
-            try {
-                marketDetailsToUse = await morphoContract.market(MARKET_IDS.usdc);
-            } catch (e) {
-                marketDetailsToUse = await morphoContract.market(MARKET_IDS.mxnb);
-            }
-
-            const totalSupplyAssets = Number(ethers.formatUnits(marketDetailsToUse.totalSupplyAssets, 6));
-            const totalBorrowAssets = Number(ethers.formatUnits(marketDetailsToUse.totalBorrowAssets, 6));
+            // Read market details
+            const marketDetails = await morphoContract.market(MARKET_IDS.mxnb);
+            const totalSupplyAssets = Number(ethers.formatUnits(marketDetails.totalSupplyAssets, 6));
+            const totalBorrowAssets = Number(ethers.formatUnits(marketDetails.totalBorrowAssets, 6));
 
             setTotalSupplied(totalSupplyAssets);
             setTotalBorrowed(totalBorrowAssets);
@@ -98,13 +89,14 @@ export const useMorphoLend = () => {
                 signer
             );
 
+            // Reconstruct market tuple as plain array to avoid read-only errors
             const marketTuple = [
-                marketDetailsToUse[0],
-                marketDetailsToUse[1],
-                marketDetailsToUse[2],
-                marketDetailsToUse[3],
-                marketDetailsToUse[4],
-                marketDetailsToUse[5],
+                marketDetails[0],   // totalSupplyAssets
+                marketDetails[1],   // totalSupplyShares
+                marketDetails[2],   // totalBorrowAssets
+                marketDetails[3],   // totalBorrowShares
+                marketDetails[4],   // lastUpdate
+                marketDetails[5],   // fee
             ];
 
             const borrowRate = await irmContract.borrowRateView(
@@ -118,14 +110,25 @@ export const useMorphoLend = () => {
                 marketTuple
             );
 
+            console.log("Market Details:", { totalSupplyAssets, totalBorrowAssets });
+            console.log("Borrow Rate (per second):", borrowRate.toString());
+
+            // Calculate APY
             const feeRate = 0; // Fee rate in decimals
             const borrowRateDecimal = Number(borrowRate) / 1e18;
             const secondsPerYear = 60 * 60 * 24 * 365;
-            const utilization = totalSupplyAssets > 0 ? (totalBorrowAssets / totalSupplyAssets) : 0;
+            const utilization = totalBorrowAssets / totalSupplyAssets;
             const borrowApy = Math.exp(borrowRateDecimal * secondsPerYear) - 1;
             const supplyApy = borrowApy * utilization * (1 - feeRate);
 
             setApy(supplyApy);
+            console.log("APY Calculation:", {
+                borrowRate: borrowRateDecimal,
+                utilization,
+                borrowApy,
+                supplyApy,
+                supplyApyPercent: supplyApy * 100,
+            });
         } catch (err) {
             console.error("Error fetching market data:", err);
         }
@@ -137,51 +140,32 @@ export const useMorphoLend = () => {
             const signer = await getSigner();
             const userAddress = await signer.getAddress();
 
-            const usdcContract = new ethers.Contract(CONTRACT_ADDRESSES.usdc, ERC20_ABI, signer);
-            const wrapperContract = new ethers.Contract(CONTRACT_ADDRESSES.wmUSDC, EXTENDED_WMEMORY_ABI, signer);
+            const mxnbContract = new ethers.Contract(CONTRACT_ADDRESSES.mockMXNB, ERC20_ABI, signer);
+            const vaultContract = new ethers.Contract(CONTRACT_ADDRESSES.morphoMXNBVault, EXTENDED_VAULT_ABI, signer);
 
-            const usdcBal = await usdcContract.balanceOf(userAddress);
-            const sharesBal = await wrapperContract.balanceOf(userAddress);
+            // Parallel reads
+            const [
+                mxnbBal,
+                sharesBal,
+                totalAssetsVal
+            ] = await Promise.all([
+                mxnbContract.balanceOf(userAddress),
+                vaultContract.balanceOf(userAddress),
+                vaultContract.totalAssets()
+            ]);
 
-            let totalAssetsVal = 0n;
-            try {
-                totalAssetsVal = await wrapperContract.totalAssets();
-            } catch (e) {
-                // Ignore if wrapper doesn't have totalAssets
+            // Derived reads
+            let assetsBal = 0n;
+            if (sharesBal > 0n) {
+                assetsBal = await vaultContract.convertToAssets(sharesBal);
             }
 
-            let assetsBal = sharesBal; // default 1:1 if not found
-            try {
-                if (sharesBal > 0n) {
-                    assetsBal = await wrapperContract.convertToAssets(sharesBal);
-                }
-            } catch (e) {
-                // Ignore if missing convertToAssets
-            }
+            setMxnbBalance(formatBalance(mxnbBal, MXNB_DECIMALS));
+            setVaultSharesBalance(formatBalance(sharesBal, MXNB_DECIMALS));
+            setVaultAssetsBalance(formatBalance(assetsBal, MXNB_DECIMALS));
+            setTvl(formatBalance(totalAssetsVal, MXNB_DECIMALS));
 
-            setUsdcBalance(formatBalance(usdcBal, USDC_DECIMALS));
-
-            let wmUSDCDecimals = 18;
-            try {
-                const dec = await wrapperContract.decimals();
-                wmUSDCDecimals = Number(dec);
-            } catch (e) { }
-
-            setWrapperSharesBalance(formatBalance(sharesBal, wmUSDCDecimals));
-
-            let displayAssets = assetsBal;
-            if (wmUSDCDecimals === 18 && displayAssets > 0n) {
-                displayAssets = displayAssets / (10n ** 12n);
-            }
-
-            setWrapperAssetsBalance(formatBalance(displayAssets, USDC_DECIMALS));
-
-            let displayTvl = totalAssetsVal;
-            if (wmUSDCDecimals === 18 && displayTvl > 0n) {
-                displayTvl = displayTvl / (10n ** 12n);
-            }
-            setTvl(formatBalance(displayTvl, USDC_DECIMALS));
-
+            // Fetch market data for APY
             await fetchMarketData();
         } catch (err) {
             console.error("Error refreshing data:", err);
@@ -217,11 +201,11 @@ export const useMorphoLend = () => {
             const currentAllowance = await tokenContract.allowance(owner, spender);
             if (currentAllowance >= requiredAmount) return;
 
-            console.log(`Waiting for allowance...`);
+            console.log(`Waiting for allowance propagation... Attempt ${retries + 1}/10`);
             await new Promise(resolve => setTimeout(resolve, 3000));
             retries++;
         }
-        throw new Error("Allowance failed to propagate.");
+        throw new Error("Allowance failed to propagate. Please try again.");
     };
 
     const waitForBalanceIncrease = async (
@@ -233,13 +217,15 @@ export const useMorphoLend = () => {
         while (retries < 15) {
             const currentBalance = await tokenContract.balanceOf(userAddress);
             if (currentBalance > initialBalance) return currentBalance;
+
+            console.log(`Waiting for balance update... Attempt ${retries + 1}/15`);
             await new Promise(resolve => setTimeout(resolve, 5000));
             retries++;
         }
-        throw new Error("RPC timeout: Balance didn't increase.");
+        throw new Error("RPC timeout: The network is slow indexing your new balance. Please wait a moment and try again.");
     };
 
-    const executeDeposit = async (amountUSDC: string) => {
+    const executeDeposit = async (amountMXNB: string) => {
         setLoading(true);
         setError(null);
         setStep(1);
@@ -248,93 +234,50 @@ export const useMorphoLend = () => {
             const signer = await getSigner();
             const userAddress = await signer.getAddress();
 
-            const usdc = new ethers.Contract(CONTRACT_ADDRESSES.usdc, ERC20_ABI, signer);
-            const aavePool = new ethers.Contract(CONTRACT_ADDRESSES.aavePool, AAVE_ABI, signer);
-            const aUSDC = new ethers.Contract(CONTRACT_ADDRESSES.aUSDC, ERC20_ABI, signer);
-            const wrapperContract = new ethers.Contract(CONTRACT_ADDRESSES.wmUSDC, EXTENDED_WMEMORY_ABI, signer);
-            const morphoUSDCVault = new ethers.Contract(CONTRACT_ADDRESSES.morphoUSDCVault, VAULT_ABI, signer);
+            const mxnbContract = new ethers.Contract(CONTRACT_ADDRESSES.mockMXNB, ERC20_ABI, signer);
+            const vaultContract = new ethers.Contract(CONTRACT_ADDRESSES.morphoMXNBVault, EXTENDED_VAULT_ABI, signer);
 
-            const depositAmountBN = ethers.parseUnits(amountUSDC, USDC_DECIMALS);
+            const depositAmountBN = ethers.parseUnits(amountMXNB, MXNB_DECIMALS);
 
-            // 1. Approve USDC to Aave
-            console.log("Step 1: Approve USDC to Aave");
-            const currentAllowance = await usdc.allowance(userAddress, CONTRACT_ADDRESSES.aavePool);
+            // Step 1: Approve
+            console.log("Step 1: Checking MXNB Allowance");
+            const currentAllowance = await mxnbContract.allowance(userAddress, CONTRACT_ADDRESSES.morphoMXNBVault);
+
             if (currentAllowance < depositAmountBN) {
-                const txApprove = await usdc.approve(CONTRACT_ADDRESSES.aavePool, ethers.MaxUint256, { gasLimit: MANUAL_GAS_LIMIT });
+                const txApprove = await mxnbContract.approve(CONTRACT_ADDRESSES.morphoMXNBVault, ethers.MaxUint256, { gasLimit: MANUAL_GAS_LIMIT });
                 setTxHash(txApprove.hash);
                 await txApprove.wait();
-                await waitForAllowance(usdc, userAddress, CONTRACT_ADDRESSES.aavePool, depositAmountBN);
+                await waitForAllowance(mxnbContract, userAddress, CONTRACT_ADDRESSES.morphoMXNBVault, depositAmountBN);
             }
 
-            const initialAUsdc = await aUSDC.balanceOf(userAddress);
+            // Capture initial shares balance
+            const initialShares = await vaultContract.balanceOf(userAddress);
 
-            // 2. Supply USDC to Aave -> get aUSDC
+            // Step 2: Deposit
             setStep(2);
-            console.log("Step 2: Supplying USDC to Aave");
-            const txDeposit = await aavePool.supply(CONTRACT_ADDRESSES.usdc, depositAmountBN, userAddress, 0, { gasLimit: MANUAL_GAS_LIMIT });
+            console.log("Step 2: Depositing MXNB");
+            const txDeposit = await vaultContract.deposit(depositAmountBN, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
             setTxHash(txDeposit.hash);
             await txDeposit.wait();
 
-            await waitForBalanceIncrease(aUSDC, userAddress, initialAUsdc);
-
-            const aUsdcBalance = await aUSDC.balanceOf(userAddress);
-            const mintedAUsdc = aUsdcBalance - initialAUsdc;
-
-            // 3. Approve USDC to Morpho Vault
+            // Step 3: Wait for balance increase
             setStep(3);
-            console.log("Step 3: Approve USDC to Morpho Vault");
-            const morphoVaultAllowance = await usdc.allowance(userAddress, CONTRACT_ADDRESSES.morphoUSDCVault);
-            if (morphoVaultAllowance < depositAmountBN) {
-                const txApproveM = await usdc.approve(CONTRACT_ADDRESSES.morphoUSDCVault, ethers.MaxUint256, { gasLimit: MANUAL_GAS_LIMIT });
-                setTxHash(txApproveM.hash);
-                await txApproveM.wait();
-                await waitForAllowance(usdc, userAddress, CONTRACT_ADDRESSES.morphoUSDCVault, depositAmountBN);
-            }
-
-            const initialMUsdc = await morphoUSDCVault.balanceOf(userAddress);
-
-            // 4. Deposit USDC to Morpho Vault -> get mUSDC
-            setStep(4);
-            console.log("Step 4: Deposit USDC to Morpho Vault");
-            const txDepositM = await morphoUSDCVault.deposit(depositAmountBN, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
-            setTxHash(txDepositM.hash);
-            await txDepositM.wait();
-
-            await waitForBalanceIncrease(morphoUSDCVault, userAddress, initialMUsdc);
-
-            const mUsdcBalance = await morphoUSDCVault.balanceOf(userAddress);
-
-            // 5. Approve mUSDC to Wrapper
-            setStep(5);
-            console.log("Step 5: Approve mUSDC to Wrapper");
-            const wrapperAllowance = await morphoUSDCVault.allowance(userAddress, CONTRACT_ADDRESSES.wmUSDC);
-            if (wrapperAllowance < mUsdcBalance) {
-                const txApproveW = await morphoUSDCVault.approve(CONTRACT_ADDRESSES.wmUSDC, ethers.MaxUint256, { gasLimit: MANUAL_GAS_LIMIT });
-                setTxHash(txApproveW.hash);
-                await txApproveW.wait();
-                await waitForAllowance(morphoUSDCVault, userAddress, CONTRACT_ADDRESSES.wmUSDC, mUsdcBalance);
-            }
-
-            const initialWrapperBal = await wrapperContract.balanceOf(userAddress);
-
-            // 6. Deposit mUSDC into Wrapper
-            setStep(6);
-            console.log("Step 6: Deposit mUSDC to Wrapper (wmUSDC)");
-            const txWrap = await wrapperContract.deposit(mUsdcBalance, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
-            setTxHash(txWrap.hash);
-            await txWrap.wait();
-
-            await waitForBalanceIncrease(wrapperContract, userAddress, initialWrapperBal);
+            await waitForBalanceIncrease(vaultContract, userAddress, initialShares);
 
             // Success
-            setStep(7);
+            setStep(4); // Success state
             await refreshData();
             setLoading(false);
 
         } catch (err: any) {
             console.error("Deposit Error:", err);
             let msg = err.reason || err.message || "Deposit failed";
+
+            {/* User friendly error messages */ }
             if (msg.includes("rejected")) msg = "You rejected the transaction";
+            if (msg.includes("insufficient liquidity")) msg = "Insufficient liquidity";
+            if (msg.includes("exceeds max deposit")) msg = "Exceeds maximum deposit";
+            else msg = "The transaction failed. Please try again.";
             setError(msg);
             setLoading(false);
         }
@@ -343,26 +286,22 @@ export const useMorphoLend = () => {
     const executeWithdraw = async (sharesAmount: string | bigint, withdrawAll: boolean = false) => {
         setLoading(true);
         setError(null);
-        setStep(11);
+        setStep(11); // Start withdrawal flow
         setWithdrawnAmount(null);
         setYieldEarned(null);
 
         try {
             const signer = await getSigner();
             const userAddress = await signer.getAddress();
-            const wrapperContract = new ethers.Contract(CONTRACT_ADDRESSES.wmUSDC, EXTENDED_WMEMORY_ABI, signer);
-            const aUSDC = new ethers.Contract(CONTRACT_ADDRESSES.aUSDC, ERC20_ABI, signer);
-            const aavePool = new ethers.Contract(CONTRACT_ADDRESSES.aavePool, AAVE_ABI, signer);
-
-            let wrapperDecimals = 18;
-            try { wrapperDecimals = Number(await wrapperContract.decimals()); } catch (e) { }
+            const vaultContract = new ethers.Contract(CONTRACT_ADDRESSES.morphoMXNBVault, EXTENDED_VAULT_ABI, signer);
 
             let sharesToRedeem: bigint;
+
             if (withdrawAll) {
-                sharesToRedeem = await wrapperContract.balanceOf(userAddress);
+                sharesToRedeem = await vaultContract.balanceOf(userAddress);
             } else {
                 if (typeof sharesAmount === 'string') {
-                    sharesToRedeem = ethers.parseUnits(sharesAmount, wrapperDecimals);
+                    sharesToRedeem = ethers.parseUnits(sharesAmount, 6);
                 } else {
                     sharesToRedeem = sharesAmount;
                 }
@@ -372,36 +311,27 @@ export const useMorphoLend = () => {
 
             console.log("Withdrawing shares:", sharesToRedeem.toString());
 
-            // 1. Unwrap wmUSDC into aUSDC
-            const initialAUsdc = await aUSDC.balanceOf(userAddress);
-            const txRedeem = await wrapperContract.redeem(sharesToRedeem, userAddress, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
+            // Preview redeem to get exact output amount
+            const expectedAssets = await vaultContract.previewRedeem(sharesToRedeem);
+            setWithdrawnAmount(ethers.formatUnits(expectedAssets, MXNB_DECIMALS));
+
+            // Calculate yield if possible (simple heuristic for now: any excess over 1:1 if we knew deposit basis, 
+            // but here we just show what we got. Or we can just leave yield as null/calculated later if we track deposits).
+            // For now, setting yield to "0.00" or calculated difference if we had cost basis. 
+            // The prompt says: "Calculate yield if > 0, or leave as 'Calculando...'".
+            // Since we don't track average cost basis here easily, we'll placeholder it or leave it null as requested 
+            // but the prompt implies we might calculate it. 
+            // Actually, we can just say "Rendimiento Generado: Calculando..." or just use a placeholder if we can't calc.
+            // But let's set it to null so UI handles it or just "0.00" if we want to be safe.
+            // Better: format the simple withdrawn amount as the success metric.
+
+            // Step 1 (11): Redeem
+            const txRedeem = await vaultContract.redeem(sharesToRedeem, userAddress, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
             setTxHash(txRedeem.hash);
             await txRedeem.wait();
 
-            await waitForBalanceIncrease(aUSDC, userAddress, initialAUsdc);
-
-            const aUsdcBalanceNow = await aUSDC.balanceOf(userAddress);
-            const aUsdcRedeemed = aUsdcBalanceNow - initialAUsdc;
-
-            // 2. Withdraw aUSDC from Aave for USDC
-            setStep(12);
-            console.log("Step 12: Withdraw aUSDC from Aave");
-            const usdc = new ethers.Contract(CONTRACT_ADDRESSES.usdc, ERC20_ABI, signer);
-            const initialUSDC = await usdc.balanceOf(userAddress);
-
-            const txWithdraw = await aavePool.withdraw(CONTRACT_ADDRESSES.usdc, aUsdcRedeemed, userAddress, { gasLimit: MANUAL_GAS_LIMIT });
-            setTxHash(txWithdraw.hash);
-            await txWithdraw.wait();
-
-            await waitForBalanceIncrease(usdc, userAddress, initialUSDC);
-
-            const usdcBalanceNow = await usdc.balanceOf(userAddress);
-            const withdrawnUSDC = usdcBalanceNow - initialUSDC;
-
-            setWithdrawnAmount(ethers.formatUnits(withdrawnUSDC, USDC_DECIMALS));
-
             // Success
-            setStep(13); // Withdrawal Success
+            setStep(12); // Withdrawal Success
             await refreshData();
             setLoading(false);
 
@@ -409,6 +339,7 @@ export const useMorphoLend = () => {
             console.error("Withdraw Error:", err);
             let msg = err.reason || err.message || "Withdraw failed";
             if (msg.includes("user rejected")) msg = "User rejected transaction";
+            else msg = "The transaction failed. Please try again.";
             setError(msg);
             setLoading(false);
         }
@@ -428,12 +359,11 @@ export const useMorphoLend = () => {
         step,
         error,
         txHash,
-        usdcBalance, // Exporting as usdcBalance representing the deposit token
-        mxnbBalance: usdcBalance, // Alias to avoid breaking strictly named UI
-        vaultSharesBalance: wrapperSharesBalance,
-        vaultAssetsBalance: wrapperAssetsBalance,
+        mxnbBalance,
+        vaultSharesBalance,
+        vaultAssetsBalance,
         tvl,
-        apy: (apy * 100).toFixed(2),
+        apy: (apy * 100).toFixed(2), // Return as percentage string for display
         withdrawnAmount,
         yieldEarned,
         executeDeposit,
