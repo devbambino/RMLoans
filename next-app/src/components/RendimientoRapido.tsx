@@ -19,7 +19,7 @@ export default function RendimientoRapido() {
         loading,
         step,
         error,
-        mxnbBalance,
+        ccopBalance,
         vaultAssetsBalance,
         tvl,
         apy,
@@ -51,7 +51,7 @@ export default function RendimientoRapido() {
     // Steps mapping
     const getStepLabel = (s: number) => {
         switch (s) {
-            case 1: return "Approving MXNB...";
+            case 1: return "Approving CCOP...";
             case 2: return "Depositing in Vault...";
             case 3: return "Confirming...";
             case 11: return "Withdrawing Liquidity...";
@@ -61,7 +61,7 @@ export default function RendimientoRapido() {
 
     // Derived states
     const hasLiquidity = parseFloat(vaultAssetsBalance) > 0;
-    const isInsufficientBalance = depositAmount && parseFloat(depositAmount) > parseFloat(mxnbBalance);
+    const isInsufficientBalance = depositAmount && parseFloat(depositAmount) > parseFloat(ccopBalance);
 
     return (
         <div className="w-full max-w-md mx-auto p-1">
@@ -73,7 +73,7 @@ export default function RendimientoRapido() {
                     <div className="flex items-center justify-between mb-8">
                         <div>
                             <h2 className="text-2xl w-fit mb-2 border-b-4 border-[#264c73] font-bold text-white">
-                                MXNB Yield
+                                CCOP Yield
                             </h2>
                             <p className="text-sm font-bold text-[#4fe3c3] mt-1">Provide liquidity and earn interest</p>
                         </div>
@@ -99,15 +99,15 @@ export default function RendimientoRapido() {
                                 {/* Row 1 */}
                                 <div className="text-center p-2">
                                     <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
-                                        <WalletIcon className="w-3 h-3 text-[#4fe3c3]" /> Available MXNB
+                                        <WalletIcon className="w-3 h-3 text-[#4fe3c3]" /> Available CCOP
                                     </div>
-                                    <div className="font-mono text-xs text-white truncate">{mxnbBalance} MXNB</div>
+                                    <div className="font-mono text-xs text-white truncate">{ccopBalance} CCOP</div>
                                 </div>
                                 <div className="text-center p-2 border-l border-[#264c73]">
                                     <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
                                         <CircleStackIcon className="w-3 h-3 text-[#4fe3c3]" /> Your Liquidity
                                     </div>
-                                    <div className="font-mono text-xs text-gray-200 truncate">{vaultAssetsBalance} MXNB</div>
+                                    <div className="font-mono text-xs text-gray-200 truncate">{vaultAssetsBalance} CCOP</div>
                                 </div>
 
                                 {/* Row 2 separator */}
@@ -118,7 +118,7 @@ export default function RendimientoRapido() {
                                     <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
                                         <BanknotesIcon className="w-3 h-3 text-[#4fe3c3]" /> TVL
                                     </div>
-                                    <div className="font-mono text-xs text-gray-200 truncate">{tvl} MXNB</div>
+                                    <div className="font-mono text-xs text-gray-200 truncate">{tvl} CCOP</div>
                                 </div>
                                 <div className="text-center p-2 border-l border-[#264c73]">
                                     <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
@@ -160,11 +160,11 @@ export default function RendimientoRapido() {
                                         <div className="text-sm bg-[#0a0a0a] border border-[#264c73] p-4 rounded-lg space-y-2 text-left">
                                             <div className="flex justify-between">
                                                 <span className="text-gray-200">Total Withdrawn:</span>
-                                                <span className="text-white font-mono">{withdrawnAmount} MXNB</span>
+                                                <span className="text-white font-mono">{withdrawnAmount} CCOP</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-200">Yield Generated:</span>
-                                                <span className="text-[#4fe3c3] font-mono">{yieldEarned || "0.00"} MXNB</span>
+                                                <span className="text-[#4fe3c3] font-mono">{yieldEarned || "0.00"} CCOP</span>
                                             </div>
                                         </div>
                                     </div>
@@ -182,7 +182,7 @@ export default function RendimientoRapido() {
                                     {!loading && (
                                         <div className="group">
                                             <label className="block text-xs font-medium text-white mb-2 uppercase tracking-wide">
-                                                How much MXNB do you want to deposit?
+                                                How much CCOP do you want to deposit?
                                             </label>
                                             <div className="relative">
                                                 <input
@@ -193,9 +193,9 @@ export default function RendimientoRapido() {
                                                     className="w-full bg-[#0a0a0a] border border-[#264c73] rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:border-[#4fe3c3] transition-all placeholder:text-gray-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                 />
                                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                                    <span className="text-sm font-semibold text-gray-200">MXNB</span>
+                                                    <span className="text-sm font-semibold text-gray-200">CCOP</span>
                                                     <button
-                                                        onClick={() => setDepositAmount(mxnbBalance)}
+                                                        onClick={() => setDepositAmount(ccopBalance)}
                                                         className="text-[10px] text-[#4fe3c3] uppercase font-bold hover:underline"
                                                     >
                                                         Max
@@ -260,7 +260,7 @@ export default function RendimientoRapido() {
                                                 }
                                             `}
                                         >
-                                            Deposit MXNB
+                                            Deposit CCOP
                                         </button>
                                     )}
 
