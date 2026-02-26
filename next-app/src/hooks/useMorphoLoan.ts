@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import { useWallets } from "@privy-io/react-auth";
+import { useWalletId } from "./useWalletId";
 import {
   BASE_SEPOLIA_CONFIG,
   CONTRACT_ADDRESSES,
@@ -20,6 +21,7 @@ const MXNB_DECIMALS = 6;
 
 export const useMorphoLoan = () => {
   const { wallets } = useWallets();
+  const { walletId } = useWalletId();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -227,7 +229,6 @@ export const useMorphoLoan = () => {
     setStep(1);
 
     try {
-      const walletId = "xelbwy2mru3a8w0ye7zvkng6"; // TODO: fetch dynamically
       const userAddress = wallets[0]?.address;
       if (!walletId || !userAddress) throw new Error("Wallet not connected");
 
