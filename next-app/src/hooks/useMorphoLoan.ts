@@ -416,17 +416,16 @@ export const useMorphoLoan = () => {
       const mxnbBal = await mxnbContract.balanceOf(userAddress);
       setTotalRepaidAmount(ethers.formatUnits(mxnbBal, MXNB_DECIMALS));
 
-      // Step 1: Repay (using assets = mxnb balance)
+      // Step 1: Repay con shares exactos de la posición — cierra deuda completamente sin dust
       setStep(12);
-      const repayAssets = mxnbBal.toString();
       const repayRes = await fetch("/api/repay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           walletId,
           userAddress,
-          borrowShares: "0",
-          borrowAssets: repayAssets,
+          borrowShares: borrowShares.toString(), // shares exacto leído de morpho.position()
+          borrowAssets: "0", // assets=0 cuando se usa shares
         }),
       });
       const repayData = await repayRes.json();
@@ -439,7 +438,11 @@ export const useMorphoLoan = () => {
 
       // Step 2: Withdraw collateral (leave small buffer for dust debt)
       setStep(13);
-      const collateralToWithdraw = ((collateral * 95n) / 100n).toString(); // 95% to avoid dust issues
+      // DESPUÉS retiramos el 100% del colateral porque al usar shares exactos
+      // en el repay la posición queda en borrowShares=0, lo que permite
+      // retirar todo el colateral sin restricciones de LTV.
+      // El LTV frontend es 50% (más conservador que el 77% de Morpho Blue).
+      const collateralToWithdraw = collateral.toString();
       const withdrawRes = await fetch("/api/withdraw-collateral", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
