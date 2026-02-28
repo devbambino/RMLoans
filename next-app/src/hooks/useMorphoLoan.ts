@@ -365,9 +365,12 @@ export const useMorphoLoan = () => {
     setStep(11);
 
     try {
-      const walletId = "xelbwy2mru3a8w0ye7zvkng6"; // TODO: fetch dynamically
       const userAddress = wallets[0]?.address;
-      if (!walletId || !userAddress) throw new Error("Wallet not connected");
+      if (!walletId || !userAddress) {
+        setError("Wallet not ready. Please try again in a moment.");
+        setLoading(false);
+        return;
+      }
 
       const provider = getProvider();
       const morpho = new ethers.Contract(
@@ -430,6 +433,9 @@ export const useMorphoLoan = () => {
       if (!repayRes.ok) throw new Error(repayData.error ?? "Repay failed");
       setTxHash(repayData.repayHash);
       console.log("Repay done:", repayData);
+
+      // Wait for repay to index before withdrawing collateral
+      await new Promise((resolve) => setTimeout(resolve, 5000));
 
       // Step 2: Withdraw collateral (leave small buffer for dust debt)
       setStep(13);

@@ -222,9 +222,12 @@ export const useMorphoLend = () => {
     setYieldEarned(null);
 
     try {
-      const walletId = "xelbwy2mru3a8w0ye7zvkng6"; // TODO: fetch dynamically
       const userAddress = wallets[0]?.address;
-      if (!walletId || !userAddress) throw new Error("Wallet not connected");
+      if (!walletId || !userAddress) {
+        setError("Wallet not ready. Please try again in a moment.");
+        setLoading(false);
+        return;
+      }
 
       const provider = getProvider();
       const vaultContract = new ethers.Contract(
