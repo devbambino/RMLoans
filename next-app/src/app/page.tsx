@@ -5,6 +5,8 @@ import { ToastContainer } from "react-toastify";
 
 import { FullScreenLoader } from "@/components/ui/fullscreen-loader";
 import Link from "next/link";
+import Button from "@/components/Button";
+
 function Home() {
   const { ready, authenticated, login } = usePrivy();
   if (!ready) {
@@ -22,7 +24,7 @@ function Home() {
           <div>
             <section className="max-w-5xl mx-auto py-16 px-6">
               <div className="text-center mb-12">
-                <h2 className="text-4xl font-extrabold text-white tracking-tight">
+                <h2 className="text-4xl font-bold text-white tracking-tight">
                   Welcome to <span>RapiLoans by RapiMoni</span>
                 </h2>
                 <p className="mt-4 text-lg text-gray-200 max-w-2xl mx-auto">
@@ -67,19 +69,20 @@ function Home() {
           </div>
         </>
       ) : (
-        <section className="flex flex-col py-20 h-screen items-center gap-10">
-          <div className="text-center">
-            <h2 className="text-4xl font-extrabold text-gray-400 tracking-tight">Welcome to RapiLoans by RapiMoni</h2>
-            <p className="mt-4 text-lg text-gray-200 max-w-2xl mx-auto">
+        <section className="relative z-20 flex flex-col items-center justify-center gap-8 w-full h-full py-20 px-6">
+          <div className="text-center space-y-4">
+            <h1 className="text-5xl text-white font-bold tracking-tighter">
+              RapiLoans by RapiMoni
+            </h1>
+            <p className="text-gray-200 max-w-lg mx-auto text-lg">
               A decentralized platform to manage your capital swiftly and securely.
             </p>
           </div>
-          <button
-            className="bg-gray-100 text-gray-900 cursor-pointer mt-15 w-full max-w-md rounded-full px-4 py-2 font-bold hover:bg-gray-300 transition-colors duration-200 lg:px-8 lg:py-4 lg:text-xl"
-            onClick={login}
-          >
-            Connect Wallet or Create Account
-          </button>
+          <div className="w-full max-w-md mt-4">
+            <Button onClick={login}>
+              Connect Wallet or Create Account
+            </Button>
+          </div>
         </section>
       )}
 

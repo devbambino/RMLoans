@@ -12,9 +12,9 @@ import {
     WalletIcon,
     CurrencyDollarIcon
 } from "@heroicons/react/24/outline";
-import Button from "./Button";
-import BalancesGrid from "./BalancesGrid";
+import BalancesGrid, { BalanceItem } from "./BalancesGrid";
 import Input from "./Input";
+import Button from "./Button";
 
 export default function RendimientoRapido() {
     const { authenticated, login } = usePrivy();
@@ -22,7 +22,7 @@ export default function RendimientoRapido() {
         loading,
         step,
         error,
-        ccopBalance,
+        mxnbBalance,
         vaultAssetsBalance,
         tvl,
         apy,
@@ -54,7 +54,7 @@ export default function RendimientoRapido() {
     // Steps mapping
     const getStepLabel = (s: number) => {
         switch (s) {
-            case 1: return "Approving CCOP...";
+            case 1: return "Approving MXNB...";
             case 2: return "Depositing in Vault...";
             case 3: return "Confirming...";
             case 11: return "Withdrawing Liquidity...";
@@ -64,19 +64,30 @@ export default function RendimientoRapido() {
 
     // Derived states
     const hasLiquidity = parseFloat(vaultAssetsBalance) > 0;
-    const isInsufficientBalance = depositAmount && parseFloat(depositAmount) > parseFloat(ccopBalance);
+    const isInsufficientBalance = depositAmount && parseFloat(depositAmount) > parseFloat(mxnbBalance);
+
+    const balanceRows: BalanceItem[][] = [
+        [
+            { label: "Available MXNB", value: `${mxnbBalance} MXNB`, icon: WalletIcon, highlightValue: true },
+            { label: "Your Liquidity", value: `${vaultAssetsBalance} MXNB`, icon: CircleStackIcon }
+        ],
+        [
+            { label: "TVL", value: `${tvl} MXNB`, icon: BanknotesIcon },
+            { label: "APY", value: `${apy}%`, icon: ChartBarIcon }
+        ]
+    ];
 
     return (
         <div className="w-full max-w-md mx-auto p-1">
             <div className="relative overflow-hidden rounded-2xl bg-[#0a0a0a] border border-[#264c73] shadow-2xl backdrop-blur-xl">
-
+                {/* Header Background Gradient */}
                 <div className="absolute top-0 left-0 w-full h-28 pointer-events-none" />
 
                 <div className="relative p-6 sm:p-8">
                     <div className="flex items-center justify-between mb-8">
                         <div>
                             <h2 className="text-2xl w-fit mb-2 border-b-4 border-[#264c73] font-bold text-white">
-                                CCOP Yield
+                                MXNB Yield
                             </h2>
                             <p className="text-sm font-bold text-[#4fe3c3] mt-1">Provide liquidity and earn interest</p>
                         </div>
@@ -88,29 +99,14 @@ export default function RendimientoRapido() {
                     {!authenticated ? (
                         <div className="text-center py-12">
                             <p className="text-gray-200 mb-6">Connect your wallet to get started</p>
-                            <button
-                                onClick={login}
-                                className="w-full cursor-pointer py-3 px-4 bg-[#264c73] hover:bg-[#4fe3c3] text-white hover:text-[#0a0a0a] font-semibold rounded-xl transition-all"
-                            >
+                            <Button onClick={login}>
                                 Connect Wallet
-                            </button>
+                            </Button>
                         </div>
                     ) : (
                         <>
-                            <BalancesGrid
-                                columns={2}
-                                className="mb-6 mt-14"
-                                rows={[
-                                    [
-                                        { label: "Available CCOP", value: `${ccopBalance} CCOP`, icon: WalletIcon, highlightValue: true },
-                                        { label: "Your Liquidity", value: `${vaultAssetsBalance} CCOP`, icon: CircleStackIcon }
-                                    ],
-                                    [
-                                        { label: "TVL", value: `${tvl} CCOP`, icon: BanknotesIcon },
-                                        { label: "APY", value: `${apy}%`, icon: ChartBarIcon }
-                                    ]
-                                ]}
-                            />
+                            {/* Balances Grid */}
+                            <BalancesGrid rows={balanceRows} columns={2} className="mb-6 mt-14" />
 
                             {/* Main Content Area */}
                             {step === 4 && !loading ? (
@@ -126,7 +122,10 @@ export default function RendimientoRapido() {
                                         </p>
                                     </div>
 
-                                    <Button onClick={handleReset} className="transform hover:-translate-y-1">
+                                    <Button
+                                        onClick={handleReset}
+                                        className="transform hover:-translate-y-1"
+                                    >
                                         Make Another Deposit
                                     </Button>
                                 </div>
@@ -141,16 +140,19 @@ export default function RendimientoRapido() {
                                         <div className="text-sm bg-[#0a0a0a] border border-[#264c73] p-4 rounded-lg space-y-2 text-left">
                                             <div className="flex justify-between">
                                                 <span className="text-gray-200">Total Withdrawn:</span>
-                                                <span className="text-white font-mono">{withdrawnAmount} CCOP</span>
+                                                <span className="text-white font-mono">{withdrawnAmount} MXNB</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-200">Yield Generated:</span>
-                                                <span className="text-[#4fe3c3] font-mono">{yieldEarned || "0.00"} CCOP</span>
+                                                <span className="text-[#4fe3c3] font-mono">{yieldEarned || "0.00"} MXNB</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <Button onClick={handleReset} className="transform hover:-translate-y-1">
+                                    <Button
+                                        onClick={handleReset}
+                                        className="transform hover:-translate-y-1"
+                                    >
                                         Back to Home
                                     </Button>
                                 </div>
@@ -158,14 +160,13 @@ export default function RendimientoRapido() {
                                 /* Input Section */
                                 <div className="space-y-6 py-2">
                                     {!loading && (
-                                        /* Input */
                                         <Input
-                                            label="How much CCOP do you want to deposit?"
+                                            label="How much MXNB do you want to deposit?"
+                                            symbol="MXNB"
                                             value={depositAmount}
                                             onChange={(e) => setDepositAmount(e.target.value)}
-                                            onMaxClick={() => setDepositAmount(ccopBalance)}
-                                            errorMessage={isInsufficientBalance && "Insufficient balance"}
-                                            disabled={loading}
+                                            onMaxClick={() => setDepositAmount(mxnbBalance)}
+                                            errorMessage={isInsufficientBalance ? "Insufficient balance" : null}
                                         />
                                     )}
 
@@ -211,17 +212,17 @@ export default function RendimientoRapido() {
                                     {!loading && (
                                         <Button
                                             onClick={handleDeposit}
-                                            disabled={!!(!depositAmount || parseFloat(depositAmount) <= 0 || isInsufficientBalance)}
+                                            disabled={!depositAmount || parseFloat(depositAmount) <= 0 || isInsufficientBalance}
                                         >
-                                            Deposit CCOP
+                                            Deposit MXNB
                                         </Button>
                                     )}
 
                                     {/* Withdraw Button */}
                                     {hasLiquidity && !loading && (
                                         <Button
-                                            onClick={handleWithdrawAll}
                                             isWithdraw
+                                            onClick={handleWithdrawAll}
                                             className="mt-2"
                                         >
                                             Withdraw All

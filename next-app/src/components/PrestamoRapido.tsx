@@ -4,13 +4,13 @@ import { useState, useEffect } from "react";
 import { useMorphoLoan } from "../hooks/useMorphoLoan";
 import { usePrivy } from "@privy-io/react-auth";
 import { CheckCircleIcon, ArrowPathIcon, BanknotesIcon, CircleStackIcon, LockClosedIcon, CreditCardIcon, ChartBarIcon } from "@heroicons/react/24/outline";
-import Button from "./Button";
-import BalancesGrid from "./BalancesGrid";
+import BalancesGrid, { BalanceItem } from "./BalancesGrid";
 import Input from "./Input";
+import Button from "./Button";
 
 export default function PrestamoRapido() {
     const { authenticated, login } = usePrivy();
-    const { loading, step, error, txHash, usdcBalance, ccopBalance, collateralBalance, borrowBalance, marketLiquidity, marketAPR, totalRepaidAmount, executeZale, executeRepayAndWithdraw, getSimulatedDeposit, resetState } = useMorphoLoan();
+    const { loading, step, error, txHash, usdcBalance, mxnbBalance, collateralBalance, borrowBalance, marketLiquidity, marketAPR, totalRepaidAmount, userPaidSubsidyInUSDC, userInterestInMxnb, userInterestInUSDC, executeZale, executeRepayAndWithdraw, getSimulatedDeposit, resetState } = useMorphoLoan();
 
     const [borrowAmount, setBorrowAmount] = useState("");
     const [requiredDeposit, setRequiredDeposit] = useState("0.00");
@@ -31,20 +31,20 @@ export default function PrestamoRapido() {
     // Steps for the stepper
     const steps = [
         "Approving USDC",
-        "Depositing in Aave",
-        "Approving aUSDC to Vault",
-        "Depositing in waUSDC",
+        "Depositing in Vault",
+        "Approving mUSDC",
+        "Wrapping to WmUSDC",
         "Approving Collateral",
         "Depositing Collateral",
-        "Requesting CCOP"
+        "Requesting MXNB"
     ];
 
     const getRepayStepLabel = (s: number) => {
         switch (s) {
-            case 11: return "Verifying CCOP...";
+            case 11: return "Verifying MXNB...";
             case 12: return "Paying Debt...";
             case 13: return "Withdrawing Collateral...";
-            case 14: return "Unwrapping waUSDC...";
+            case 14: return "Unwrapping WmUSDC...";
             case 15: return "Recovering USDC...";
             case 16: return "Completed!";
             default: return "Processing...";
@@ -52,8 +52,21 @@ export default function PrestamoRapido() {
     };
 
     // Derived state for validation
-    const isExceedingLiquidity = Boolean(borrowAmount) && parseFloat(borrowAmount) > parseFloat(marketLiquidity);
+    const isExceedingLiquidity = Boolean(borrowAmount && parseFloat(borrowAmount) > parseFloat(marketLiquidity));
     const isInsufficientBalance = parseFloat(usdcBalance) < parseFloat(requiredDeposit || "0");
+
+    const balanceRows: BalanceItem[][] = [
+        [
+            { label: "USDC", value: `${usdcBalance} USDC`, icon: CircleStackIcon, highlightValue: true },
+            { label: "MXNB", value: `${mxnbBalance} MXNB`, icon: BanknotesIcon, highlightValue: true },
+            { label: "Collateral", value: `${collateralBalance} WmUSDC`, icon: LockClosedIcon }
+        ],
+        [
+            { label: "Current Debt", value: `${borrowBalance} MXNB`, icon: CreditCardIcon },
+            { label: "Rate (APR)", value: `${marketAPR}%`, icon: ChartBarIcon },
+            { label: "Liquidity", value: `${marketLiquidity} MXNB`, icon: CircleStackIcon }
+        ]
+    ];
 
     return (
         <div className="w-full max-w-md mx-auto p-1">
@@ -67,7 +80,7 @@ export default function PrestamoRapido() {
                             <h2 className="text-2xl mb-2 border-b-4 border-[#264c73] font-bold text-white">
                                 Quick Loan
                             </h2>
-                            <p className="text-sm font-bold text-[#4fe3c3] mt-1">Get CCOP instantly</p>
+                            <p className="text-sm font-bold text-[#4fe3c3] mt-1">Get MXNB instantly</p>
                         </div>
                         <div className="p-3 rounded-full bg-[#0a0a0a] border border-[#264c73]">
                             <BanknotesIcon className="w-6 h-6 text-[#4fe3c3]" />
@@ -77,31 +90,14 @@ export default function PrestamoRapido() {
                     {!authenticated ? (
                         <div className="text-center py-12">
                             <p className="text-gray-200 mb-6">Connect your wallet to get started</p>
-                            <button
-                                onClick={login}
-                                className="w-full py-3 px-4 bg-[#264c73] hover:bg-[#4fe3c3] text-white hover:text-[#0a0a0a] font-semibold rounded-xl transition-all"
-                            >
+                            <Button onClick={login}>
                                 Connect Wallet
-                            </button>
+                            </Button>
                         </div>
                     ) : (
                         <>
-                            <BalancesGrid
-                                columns={3}
-                                className="mb-2 mt-16"
-                                rows={[
-                                    [
-                                        { label: "USDC", value: `${usdcBalance} USDC`, icon: CircleStackIcon, highlightValue: true },
-                                        { label: "CCOP", value: `${ccopBalance} CCOP`, icon: BanknotesIcon, highlightValue: true },
-                                        { label: "Collateral", value: `${collateralBalance} waUSDC`, icon: LockClosedIcon }
-                                    ],
-                                    [
-                                        { label: "Current Debt", value: `${borrowBalance} CCOP`, icon: CreditCardIcon },
-                                        { label: "Rate (APR)", value: `${marketAPR}%`, icon: ChartBarIcon },
-                                        { label: "Liquidity", value: `${marketLiquidity} CCOP`, icon: CircleStackIcon }
-                                    ]
-                                ]}
-                            />
+                            {/* Balances Grid */}
+                            <BalancesGrid rows={balanceRows} columns={3} className="mb-2 mt-16" />
 
                             {step === 8 ? (
                                 <div className="py-8 text-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
@@ -111,7 +107,7 @@ export default function PrestamoRapido() {
                                     <div>
                                         <h3 className="text-2xl font-bold text-white mb-2">Operation Successful!</h3>
                                         <p className="text-gray-200">
-                                            You received <span className="text-[#4fe3c3] font-bold text-lg">{borrowAmount} CCOP</span>
+                                            You received <span className="text-[#4fe3c3] font-bold text-lg">{borrowAmount} MXNB</span>
                                         </p>
                                     </div>
 
@@ -135,12 +131,27 @@ export default function PrestamoRapido() {
                                         <div className="text-sm bg-[#0a0a0a] border border-[#264c73] p-4 rounded-lg space-y-2 text-left">
                                             <div className="flex justify-between">
                                                 <span className="text-gray-200">Total Paid:</span>
-                                                <span className="text-white font-mono">{totalRepaidAmount || "Calculating..."} CCOP</span>
+                                                <span className="text-white font-mono">{totalRepaidAmount || "Calculating..."} MXNB</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-200">Status:</span>
                                                 <span className="text-[#4fe3c3]">Debt Settled</span>
                                             </div>
+                                            {parseFloat(userPaidSubsidyInUSDC || "0") > 0 && (
+                                                <>
+                                                    <div className="h-px bg-[#264c73] my-2" />
+                                                    <div className="text-center">
+                                                        <div className="text-xs text-[#4fe3c3] font-semibold mb-2 flex items-center justify-center gap-1">
+                                                            💰 We've subsidized your loan interest!!!
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-200">We gave you:</span>
+                                                        <span className="text-white font-mono">{userInterestInMxnb} MXNB (~= {userInterestInUSDC})</span>
+                                                        <span className="text-xs text-gray-200 font-mono">(Approx. {userInterestInUSDC} USDC)</span>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
 
@@ -157,12 +168,13 @@ export default function PrestamoRapido() {
                             ) : (
                                 /* Input Section */
                                 <div className="space-y-6 py-6">
-                                    {/* Input */}
                                     <Input
-                                        label="How much CCOP do you want to receive?"
+                                        label="How much MXNB do you want to receive?"
+                                        symbol="MXNB"
                                         value={borrowAmount}
                                         onChange={(e) => setBorrowAmount(e.target.value)}
                                         disabled={loading}
+                                        errorMessage={isExceedingLiquidity ? "Insufficient liquidity in market" : null}
                                     />
 
                                     {/* Simulation Output */}
@@ -181,17 +193,12 @@ export default function PrestamoRapido() {
                                                 ⚠️ Insufficient balance
                                             </div>
                                         )}
-                                        {isExceedingLiquidity && (
-                                            <div className="text-xs text-[#4fe3c3] mt-2 flex items-center gap-1">
-                                                ⚠️ Insufficient liquidity in market
-                                            </div>
-                                        )}
                                     </div>
 
                                     {/* Progress Stepper (Visible when loading) */}
                                     {loading && (
                                         <div className="space-y-3 py-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                            {step < 11 ? (
+                                            {step < 10 ? (
                                                 <>
                                                     <div className="flex justify-between text-xs text-gray-200 uppercase tracking-widest mb-1">
                                                         <span>Processing Loan...</span>
@@ -242,13 +249,15 @@ export default function PrestamoRapido() {
                                         <div className="p-4 rounded-xl bg-[#0a0a0a] border border-[#264c73] text-[#4fe3c3] text-sm text-center">
                                             <CheckCircleIcon className="w-8 h-8 mx-auto mb-2 text-[#4fe3c3]" />
                                             <p className="font-bold text-lg">Loan Successful!</p>
-                                            <p className="text-gray-200">You received {borrowAmount} CCOP.</p>
+                                            <p className="text-gray-200">You received {borrowAmount} MXNB.</p>
                                         </div>
                                     )}
 
+                                    {/* Action Button */}
                                     <Button
                                         onClick={handleBorrow}
                                         disabled={loading || !borrowAmount || parseFloat(borrowAmount) <= 0 || isInsufficientBalance || isExceedingLiquidity}
+                                        className="w-full mt-6 bg-[#4fe3c3] text-black font-bold py-4 rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {loading ? (
                                             <span className="flex items-center justify-center gap-2 text-[#4fe3c3]">
@@ -265,8 +274,8 @@ export default function PrestamoRapido() {
                                     {/* Repay Button - Only show if user has debt or collateral */}
                                     {(!loading && (parseFloat(borrowBalance) > 0 || parseFloat(collateralBalance) > 0)) && (
                                         <Button
-                                            onClick={executeRepayAndWithdraw}
                                             isWithdraw
+                                            onClick={executeRepayAndWithdraw}
                                             className="mt-4"
                                         >
                                             Pay All and Withdraw
