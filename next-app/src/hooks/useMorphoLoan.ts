@@ -458,9 +458,22 @@ export const useMorphoLoan = () => {
       setTxHash(withdrawData.withdrawHash);
       console.log("Withdraw collateral done:", withdrawData);
 
-      // Step 3: Unwrap WmUSDC → mUSDC
+      // Step 3: Esperar activamente hasta que el balance de WmUSDC se indexe
       setStep(14);
-      const wmusdcBal = await wmUSDCContract.balanceOf(userAddress);
+      let wmusdcBal = 0n;
+      let retries = 0;
+      while (retries < 15) {
+        wmusdcBal = await wmUSDCContract.balanceOf(userAddress);
+        console.log(
+          `WmUSDC balance attempt ${retries + 1}:`,
+          wmusdcBal.toString(),
+        );
+        if (wmusdcBal > 0n) break;
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        retries++;
+      }
+      console.log("WmUSDC balance final:", wmusdcBal.toString());
+
       if (wmusdcBal > 0n) {
         const unwrapRes = await fetch("/api/unwrap", {
           method: "POST",
@@ -480,6 +493,8 @@ export const useMorphoLoan = () => {
       // Step 4: Redeem mUSDC → USDC
       setStep(15);
       const musdcBal = await mUSDCContract.balanceOf(userAddress);
+      console.log("mUSDC balance before redeem:", musdcBal.toString());
+
       if (musdcBal > 0n) {
         const redeemRes = await fetch("/api/withdraw-vault", {
           method: "POST",
