@@ -32,11 +32,7 @@ export default function BalanceCard({
                             </h2>
                             <p className="text-sm font-bold text-[#4fe3c3] mt-1">Wallet Balance</p>
                         </div>
-                        {/* {isUSDC ? <Image src="/eeuuFlag.jpg" alt="USDC" width={40} height={40} /> : <Image src="/mexicanFlag.webp" alt="MXNB" width={40} height={40} />} */}
-
-                        <div className="p-3 self-start rounded-full bg-[#0a0a0a] border border-[#264c73]">
-                            <ChartBarIcon className="w-6 h-6 text-[#4fe3c3]" />
-                        </div>
+                        {isUSDC ? <Image src="/eeuuFlag.jpg" className="rounded" alt="USDC" width={50} height={50} /> : <Image src="/mexicanFlag.webp" className="rounded" alt="MXNB" width={50} height={50} />}
                     </div>
                     <div className="flex-1 flex flex-col justify-center items-center py-6">
                         <div className="text-5xl font-mono text-white mb-2">{balance}</div>

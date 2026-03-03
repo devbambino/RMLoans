@@ -10,7 +10,7 @@ import { useState } from "react";
 
 export default function Page() {
     const { ready, authenticated, login } = usePrivy();
-    const { usdcBalance, mxnbBalance } = useMorphoLoan();
+    const { usdcBalance, mxnbBalance, refreshData } = useMorphoLoan();
 
     // Modals state
     const [isSendOpen, setIsSendOpen] = useState(false);
@@ -78,6 +78,7 @@ export default function Page() {
                             onClose={() => setIsSendOpen(false)}
                             currency={selectedCurrency}
                             balance={selectedBalance}
+                            onSuccess={refreshData}
                         />
                         <ReceiveModal
                             isOpen={isReceiveOpen}
