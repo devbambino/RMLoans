@@ -412,7 +412,7 @@ Must remain > 1.0 to avoid liquidation
 - **RPC:** https://mainnet.base.org
 - **Block Explorer:** https://base.blockscout.com/
 - **Gas Token:** ETH (native)
-- **LOAN TOKEN (MXNE):**https://basescan.org/token/0x269cae7dc59803e5c596c95756faeebb6030e0af
+- **LOAN TOKEN (MXNE):** https://basescan.org/token/0x269cae7dc59803e5c596c95756faeebb6030e0af
 
 
 **Why Base?**

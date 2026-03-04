@@ -5,13 +5,13 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title MockMXNB
- * @notice Mock ERC20 token representing MXNB_test (test collateral/loan asset)
+ * @title MockMXNE
+ * @notice Mock ERC20 token representing MXNE_test (test collateral/loan asset)
  * @dev Mintable for PoC purposes. In production, this would be a real token.
  */
-contract MockMXNB is ERC20, Ownable {
-    // Constructor: Initialize the token with name "MXNB_test" and symbol "MXNB"
-    constructor() ERC20("MXNB_test", "MXNB") Ownable(msg.sender) {}
+contract MockMXNE is ERC20, Ownable {
+    // Constructor: Initialize the token with name "MXNE_test" and symbol "MXNE"
+    constructor() ERC20("MXNE_test", "MXNE") Ownable(msg.sender) {}
 
     /**
      * @notice Mint new tokens to an address
