@@ -10,21 +10,21 @@ import { useState } from "react";
 
 export default function Page() {
     const { ready, authenticated, login } = usePrivy();
-    const { usdcBalance, mxnbBalance, refreshData } = useMorphoLoan();
+    const { usdcBalance, mxneBalance, refreshData } = useMorphoLoan();
 
     // Modals state
     const [isSendOpen, setIsSendOpen] = useState(false);
     const [isReceiveOpen, setIsReceiveOpen] = useState(false);
-    const [selectedCurrency, setSelectedCurrency] = useState<"USDC" | "MXNB">("USDC");
+    const [selectedCurrency, setSelectedCurrency] = useState<"USDC" | "MXNE">("USDC");
     const [selectedBalance, setSelectedBalance] = useState("0");
 
-    const openSend = (currency: "USDC" | "MXNB", balance: string) => {
+    const openSend = (currency: "USDC" | "MXNE", balance: string) => {
         setSelectedCurrency(currency);
         setSelectedBalance(balance);
         setIsSendOpen(true);
     };
 
-    const openReceive = (currency: "USDC" | "MXNB") => {
+    const openReceive = (currency: "USDC" | "MXNE") => {
         setSelectedCurrency(currency);
         setIsReceiveOpen(true);
     };
@@ -65,10 +65,10 @@ export default function Page() {
                                 onReceive={() => openReceive("USDC")}
                             />
                             <BalanceCard
-                                currency="MXNB"
-                                balance={mxnbBalance}
-                                onSend={() => openSend("MXNB", mxnbBalance)}
-                                onReceive={() => openReceive("MXNB")}
+                                currency="MXNE"
+                                balance={mxneBalance}
+                                onSend={() => openSend("MXNE", mxneBalance)}
+                                onReceive={() => openReceive("MXNE")}
                             />
                         </div>
 

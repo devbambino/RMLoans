@@ -10,7 +10,7 @@ const publicClient = createPublicClient({
 });
 
 const USDC = "0xba50cd2a20f6da35d788639e581bca8d0b5d4d5f";
-const MXNB = "0xF19D2F986DC0fb7E2A82cb9b55f7676967F7bC3E";
+const MXNE = "0xF19D2F986DC0fb7E2A82cb9b55f7676967F7bC3E";
 
 const erc20Abi = [
   {
@@ -37,9 +37,9 @@ export async function POST(req: Request) {
     const recipient = getAddress(
       recipientAddress.toLowerCase(),
     ) as `0x${string}`;
-    const tokenAddress = currency === "USDC" ? USDC : MXNB;
+    const tokenAddress = currency === "USDC" ? USDC : MXNE;
 
-    // Both USDC and MXNB have 6 decimals
+    // Both USDC and MXNE have 6 decimals
     const parsedAmount = BigInt(Math.round(parseFloat(amount) * 1_000_000));
 
     console.log("--- TRANSFER ---", {

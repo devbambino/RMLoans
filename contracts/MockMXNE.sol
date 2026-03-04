@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract MockMXNE is ERC20, Ownable {
     // Constructor: Initialize the token with name "MXNE_test" and symbol "MXNE"
-    constructor() ERC20("MXNE_test", "MXNE") Ownable(msg.sender) {}
+    constructor() ERC20("MXNe_test", "MXNe") Ownable(msg.sender) {}
 
     /**
      * @notice Mint new tokens to an address

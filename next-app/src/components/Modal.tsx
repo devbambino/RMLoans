@@ -52,7 +52,7 @@ export function Modal({ isOpen, onClose, title, subtitle, children }: ModalProps
 interface SendModalProps {
     isOpen: boolean;
     onClose: () => void;
-    currency: "USDC" | "MXNB";
+    currency: "USDC" | "MXNE";
     balance: string;
     onSuccess?: () => void;
 }
@@ -165,7 +165,7 @@ export function SendModal({ isOpen, onClose, currency, balance, onSuccess }: Sen
 interface ReceiveModalProps {
     isOpen: boolean;
     onClose: () => void;
-    currency: "USDC" | "MXNB";
+    currency: "USDC" | "MXNE";
 }
 
 export function ReceiveModal({ isOpen, onClose, currency }: ReceiveModalProps) {

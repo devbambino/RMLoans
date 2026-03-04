@@ -10,7 +10,7 @@ import Button from "./Button";
 
 export default function PrestamoRapido() {
     const { authenticated, login } = usePrivy();
-    const { loading, step, error, txHash, usdcBalance, mxnbBalance, collateralBalance, borrowBalance, marketLiquidity, marketAPR, totalRepaidAmount, userPaidSubsidyInUSDC, userInterestInMxnb, userInterestInUSDC, executeZale, executeRepayAndWithdraw, getSimulatedDeposit, resetState } = useMorphoLoan();
+    const { loading, step, error, txHash, usdcBalance, mxneBalance, collateralBalance, borrowBalance, marketLiquidity, marketAPR, totalRepaidAmount, userPaidSubsidyInUSDC, userInterestInMxne, userInterestInUSDC, executeZale, executeRepayAndWithdraw, getSimulatedDeposit, resetState } = useMorphoLoan();
 
     const [borrowAmount, setBorrowAmount] = useState("");
     const [requiredDeposit, setRequiredDeposit] = useState("0.00");
@@ -36,12 +36,12 @@ export default function PrestamoRapido() {
         "Wrapping to WmUSDC",
         "Approving Collateral",
         "Depositing Collateral",
-        "Requesting MXNB"
+        "Requesting MXNe"
     ];
 
     const getRepayStepLabel = (s: number) => {
         switch (s) {
-            case 11: return "Verifying MXNB...";
+            case 11: return "Verifying MXNe...";
             case 12: return "Paying Debt...";
             case 13: return "Withdrawing Collateral...";
             case 14: return "Unwrapping WmUSDC...";
@@ -58,13 +58,13 @@ export default function PrestamoRapido() {
     const balanceRows: BalanceItem[][] = [
         [
             { label: "USDC", value: `${usdcBalance} USDC`, icon: CircleStackIcon, highlightValue: true },
-            { label: "MXNB", value: `${mxnbBalance} MXNB`, icon: BanknotesIcon, highlightValue: true },
+            { label: "MXNE", value: `${mxneBalance} MXNe`, icon: BanknotesIcon, highlightValue: true },
             { label: "Collateral", value: `${collateralBalance} WmUSDC`, icon: LockClosedIcon }
         ],
         [
-            { label: "Current Debt", value: `${borrowBalance} MXNB`, icon: CreditCardIcon },
+            { label: "Current Debt", value: `${borrowBalance} MXNe`, icon: CreditCardIcon },
             { label: "Rate (APR)", value: `${marketAPR}%`, icon: ChartBarIcon },
-            { label: "Liquidity", value: `${marketLiquidity} MXNB`, icon: CircleStackIcon }
+            { label: "Liquidity", value: `${marketLiquidity} MXNe`, icon: CircleStackIcon }
         ]
     ];
 
@@ -80,7 +80,7 @@ export default function PrestamoRapido() {
                             <h2 className="text-2xl mb-2 border-b-4 border-[#264c73] font-bold text-white">
                                 Quick Loan
                             </h2>
-                            <p className="text-sm font-bold text-[#4fe3c3] mt-1">Get MXNB instantly</p>
+                            <p className="text-sm font-bold text-[#4fe3c3] mt-1">Get MXNe instantly</p>
                         </div>
                         <div className="p-3 rounded-full bg-[#0a0a0a] border border-[#264c73]">
                             <BanknotesIcon className="w-6 h-6 text-[#4fe3c3]" />
@@ -107,7 +107,7 @@ export default function PrestamoRapido() {
                                     <div>
                                         <h3 className="text-2xl font-bold text-white mb-2">Operation Successful!</h3>
                                         <p className="text-gray-200">
-                                            You received <span className="text-[#4fe3c3] font-bold text-lg">{borrowAmount} MXNB</span>
+                                            You received <span className="text-[#4fe3c3] font-bold text-lg">{borrowAmount} MXNe</span>
                                         </p>
                                     </div>
 
@@ -131,7 +131,7 @@ export default function PrestamoRapido() {
                                         <div className="text-sm bg-[#0a0a0a] border border-[#264c73] p-4 rounded-lg space-y-2 text-left">
                                             <div className="flex justify-between">
                                                 <span className="text-gray-200">Total Paid:</span>
-                                                <span className="text-white font-mono">{totalRepaidAmount || "Calculating..."} MXNB</span>
+                                                <span className="text-white font-mono">{totalRepaidAmount || "Calculating..."} MXNe</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-200">Status:</span>
@@ -147,7 +147,7 @@ export default function PrestamoRapido() {
                                                     </div>
                                                     <div className="flex justify-between">
                                                         <span className="text-gray-200">We gave you:</span>
-                                                        <span className="text-white font-mono">{userInterestInMxnb} MXNB (~= {userInterestInUSDC})</span>
+                                                        <span className="text-white font-mono">{userInterestInMxne} MXNe (~= {userInterestInUSDC})</span>
                                                         <span className="text-xs text-gray-200 font-mono">(Approx. {userPaidSubsidyInUSDC} USDC)</span>
                                                     </div>
                                                 </>
@@ -169,8 +169,8 @@ export default function PrestamoRapido() {
                                 /* Input Section */
                                 <div className="space-y-6 py-6">
                                     <Input
-                                        label="How much MXNB do you want to receive?"
-                                        symbol="MXNB"
+                                        label="How much MXNe do you want to receive?"
+                                        symbol="MXNE"
                                         value={borrowAmount}
                                         onChange={(e) => setBorrowAmount(e.target.value)}
                                         disabled={loading}
@@ -249,7 +249,7 @@ export default function PrestamoRapido() {
                                         <div className="p-4 rounded-xl bg-[#0a0a0a] border border-[#264c73] text-[#4fe3c3] text-sm text-center">
                                             <CheckCircleIcon className="w-8 h-8 mx-auto mb-2 text-[#4fe3c3]" />
                                             <p className="font-bold text-lg">Loan Successful!</p>
-                                            <p className="text-gray-200">You received {borrowAmount} MXNB.</p>
+                                            <p className="text-gray-200">You received {borrowAmount} MXNe.</p>
                                         </div>
                                     )}
 

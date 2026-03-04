@@ -9,7 +9,7 @@ export default function Page() {
                         RapiLoans Yield
                     </h1>
                     <p className="text-gray-200 max-w-lg mx-auto text-lg">
-                        Provide liquidity to our vault and generate passive returns in MXNB.
+                        Provide liquidity to our vault and generate passive returns in MXNe.
                         <br />
                     </p>
                 </div>

@@ -52,7 +52,7 @@ const wmUsdcAbi = [
 				type: "address"
 			}
 		],
-		name: "userInterestInMxnb",
+		name: "userInterestInMxne",
 		outputs: [
 			{
 				name: "",
@@ -114,25 +114,25 @@ export async function POST(req: Request) {
       retries++;
     }
 
-    // Get subsidy in MXNB
-    const rawSubsidyMXNB = await publicClient.readContract({
+    // Get subsidy in MXNE
+    const rawSubsidyMXNE = await publicClient.readContract({
       address: WM_USDC as `0x${string}`,
       abi: wmUsdcAbi,
-      functionName: "userInterestInMxnb",
+      functionName: "userInterestInMxne",
       args: [addr],
     });
 
     const subsidyInUSDC = ethers.formatUnits(finalSubsidyUSDC, 18);
-    const subsidyInMXNB = ethers.formatUnits(rawSubsidyMXNB, 6);
+    const subsidyInMXNE = ethers.formatUnits(rawSubsidyMXNE, 6);
 
-    console.log("Final subsidy:", { subsidyInUSDC, subsidyInMXNB });
+    console.log("Final subsidy:", { subsidyInUSDC, subsidyInMXNE });
 
     return NextResponse.json({ 
       success: true, 
       subsidyInUSDC,
-      subsidyInMXNB,
+      subsidyInMXNE,
       rawSubsidyUSDC: finalSubsidyUSDC.toString(),
-      rawSubsidyMXNB: rawSubsidyMXNB.toString()
+      rawSubsidyMXNE: rawSubsidyMXNE.toString()
     });
   } catch (e: any) {
     console.error("GET INTEREST SUBSIDY ERROR:", e);

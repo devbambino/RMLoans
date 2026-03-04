@@ -16,13 +16,13 @@ const publicClient = createPublicClient({
 });
 
 const MORPHO_BLUE = "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb";
-const MXNB = "0xF19D2F986DC0fb7E2A82cb9b55f7676967F7bC3E";
+const MXNE = "0xF19D2F986DC0fb7E2A82cb9b55f7676967F7bC3E";
 const WM_USDC = "0xBDc7fCDAC92DEe5220215aB6a0f5E1B20A665CD4";
 const ORACLE = "0x9f4b138BF3513866153Af9f0A2794096DFebFaD4";
 const IRM = "0x46415998764C29aB2a25CbeA6254146D50D22687";
 const LLTV = parseEther("0.77");
 const MARKET = {
-  loanToken: MXNB as `0x${string}`,
+  loanToken: MXNE as `0x${string}`,
   collateralToken: WM_USDC as `0x${string}`,
   oracle: ORACLE as `0x${string}`,
   irm: IRM as `0x${string}`,
@@ -138,7 +138,7 @@ export async function POST(req: Request) {
       retries++;
     }
 
-    // Step 1: Approve MXNB → Morpho Blue (maxUint256)
+    // Step 1: Approve MXNE → Morpho Blue (maxUint256)
     const approveData = encodeFunctionData({
       abi: erc20Abi,
       functionName: "approve",
@@ -150,7 +150,7 @@ export async function POST(req: Request) {
       ],
     });
     const approveTx = await privyRpc(walletId, "eip155:84532", {
-      to: MXNB,
+      to: MXNE,
       data: approveData,
       chain_id: 84532,
     });

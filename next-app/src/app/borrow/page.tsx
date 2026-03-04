@@ -11,7 +11,7 @@ export default function Page() {
                         RapiLoans
                     </h1>
                     <p className="text-gray-200 max-w-lg mx-auto text-lg">
-                        Instant loans in MXNB using your USDC as collateral.
+                        Instant loans in MXNe using your USDC as collateral.
                     </p>
                 </div>
 

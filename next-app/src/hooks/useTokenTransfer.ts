@@ -12,7 +12,7 @@ export const useTokenTransfer = () => {
   const [txHash, setTxHash] = useState<string | null>(null);
 
   const execute = async (
-    currency: "USDC" | "MXNB",
+    currency: "USDC" | "MXNE",
     amount: string,
     recipientAddress: string,
   ) => {

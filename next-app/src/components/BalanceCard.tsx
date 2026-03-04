@@ -4,7 +4,7 @@ import Image from "next/image";
 import { ChartBarIcon } from "@heroicons/react/16/solid";
 
 interface BalanceCardProps {
-    currency: "USDC" | "MXNB";
+    currency: "USDC" | "MXNE";
     balance: string;
     onSend?: () => void;
     onReceive?: () => void;
@@ -32,7 +32,7 @@ export default function BalanceCard({
                             </h2>
                             <p className="text-sm font-bold text-[#4fe3c3] mt-1">Wallet Balance</p>
                         </div>
-                        {isUSDC ? <Image src="/eeuuFlag.jpg" className="rounded" alt="USDC" width={50} height={50} /> : <Image src="/mexicanFlag.webp" className="rounded" alt="MXNB" width={50} height={50} />}
+                        {isUSDC ? <Image src="/eeuuFlag.jpg" className="rounded" alt="USDC" width={50} height={50} /> : <Image src="/mexicanFlag.webp" className="rounded" alt="MXNE" width={50} height={50} />}
                     </div>
                     <div className="flex-1 flex flex-col justify-center items-center py-6">
                         <div className="text-5xl font-mono text-white mb-2">{balance}</div>

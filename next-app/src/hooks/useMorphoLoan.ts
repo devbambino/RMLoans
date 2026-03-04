@@ -11,13 +11,13 @@ import {
   WMEMORY_ABI,
   MORPHO_ABI,
   IRM_ABI,
-  MXNB_MARKET_PARAMS,
+  MXNE_MARKET_PARAMS,
   MARKET_IDS,
 } from "../constants/contracts";
 
 const TARGET_LTV = 0.5;
 const USDC_DECIMALS = 6;
-const MXNB_DECIMALS = 6;
+const MXNE_DECIMALS = 6;
 
 export const useMorphoLoan = () => {
   const { wallets } = useWallets();
@@ -27,7 +27,7 @@ export const useMorphoLoan = () => {
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<string>("0.00");
-  const [mxnbBalance, setMxnbBalance] = useState<string>("0.00");
+  const [mxneBalance, setMxneBalance] = useState<string>("0.00");
   const [collateralBalance, setCollateralBalance] = useState<string>("0.00");
   const [borrowBalance, setBorrowBalance] = useState<string>("0.00");
   const [marketLiquidity, setMarketLiquidity] = useState<string>("0");
@@ -38,7 +38,7 @@ export const useMorphoLoan = () => {
   const [oraclePrice, setOraclePrice] = useState<bigint>(0n);
   const [userPaidSubsidyInUSDC, setUserPaidSubsidyInUSDC] =
     useState<string>("0");
-  const [userInterestInMxnb, setUserInterestInMxnb] = useState<string>("0");
+  const [userInterestInMxne, setUserInterestInMxne] = useState<string>("0");
   const [userInterestInUSDC, setUserInterestInUSDC] = useState<string>("0");
 
   const formatBalance = (val: bigint, decimals: number) => {
@@ -61,16 +61,16 @@ export const useMorphoLoan = () => {
         MORPHO_ABI,
         provider,
       );
-      const marketDetails = await morpho.market(MARKET_IDS.mxnb);
+      const marketDetails = await morpho.market(MARKET_IDS.mxne);
       const totalSupplyAssets = Number(
-        ethers.formatUnits(marketDetails.totalSupplyAssets, MXNB_DECIMALS),
+        ethers.formatUnits(marketDetails.totalSupplyAssets, MXNE_DECIMALS),
       );
       const totalBorrowAssets = Number(
-        ethers.formatUnits(marketDetails.totalBorrowAssets, MXNB_DECIMALS),
+        ethers.formatUnits(marketDetails.totalBorrowAssets, MXNE_DECIMALS),
       );
 
       const irmContract = new ethers.Contract(
-        MXNB_MARKET_PARAMS.irm,
+        MXNE_MARKET_PARAMS.irm,
         IRM_ABI,
         provider,
       );
@@ -84,11 +84,11 @@ export const useMorphoLoan = () => {
       ];
       const borrowRate = await irmContract.borrowRateView(
         [
-          MXNB_MARKET_PARAMS.loanToken,
-          MXNB_MARKET_PARAMS.collateralToken,
-          MXNB_MARKET_PARAMS.oracle,
-          MXNB_MARKET_PARAMS.irm,
-          MXNB_MARKET_PARAMS.lltv,
+          MXNE_MARKET_PARAMS.loanToken,
+          MXNE_MARKET_PARAMS.collateralToken,
+          MXNE_MARKET_PARAMS.oracle,
+          MXNE_MARKET_PARAMS.irm,
+          MXNE_MARKET_PARAMS.lltv,
         ],
         marketTuple,
       );
@@ -113,8 +113,8 @@ export const useMorphoLoan = () => {
         ERC20_ABI,
         provider,
       );
-      const mxnbContract = new ethers.Contract(
-        CONTRACT_ADDRESSES.mockMXNB,
+      const mxneContract = new ethers.Contract(
+        CONTRACT_ADDRESSES.mockMXNE,
         ERC20_ABI,
         provider,
       );
@@ -124,22 +124,22 @@ export const useMorphoLoan = () => {
         provider,
       );
 
-      const [usdcBal, mxnbBal] = await Promise.all([
+      const [usdcBal, mxneBal] = await Promise.all([
         usdcContract.balanceOf(userAddress),
-        mxnbContract.balanceOf(userAddress),
+        mxneContract.balanceOf(userAddress),
       ]);
       setUsdcBalance(formatBalance(usdcBal, USDC_DECIMALS));
-      setMxnbBalance(formatBalance(mxnbBal, MXNB_DECIMALS));
+      setMxneBalance(formatBalance(mxneBal, MXNE_DECIMALS));
 
       const marketId = ethers.keccak256(
         ethers.AbiCoder.defaultAbiCoder().encode(
           ["address", "address", "address", "address", "uint256"],
           [
-            MXNB_MARKET_PARAMS.loanToken,
-            MXNB_MARKET_PARAMS.collateralToken,
-            MXNB_MARKET_PARAMS.oracle,
-            MXNB_MARKET_PARAMS.irm,
-            MXNB_MARKET_PARAMS.lltv,
+            MXNE_MARKET_PARAMS.loanToken,
+            MXNE_MARKET_PARAMS.collateralToken,
+            MXNE_MARKET_PARAMS.oracle,
+            MXNE_MARKET_PARAMS.irm,
+            MXNE_MARKET_PARAMS.lltv,
           ],
         ),
       );
@@ -158,10 +158,10 @@ export const useMorphoLoan = () => {
 
       setBorrowBalance(formatBalance(position[1], 12));
       setCollateralBalance(formatBalance(position[2], 18));
-      setMarketLiquidity(formatBalance(liquidityAssets, MXNB_DECIMALS));
+      setMarketLiquidity(formatBalance(liquidityAssets, MXNE_DECIMALS));
 
       const oracle = new ethers.Contract(
-        MXNB_MARKET_PARAMS.oracle,
+        MXNE_MARKET_PARAMS.oracle,
         ["function price() external view returns (uint256)"],
         provider,
       );
@@ -191,16 +191,16 @@ export const useMorphoLoan = () => {
     }
   }, [error]);
 
-  const getSimulatedDeposit = (borrowAmountMXNB: string): string => {
-    if (!borrowAmountMXNB || parseFloat(borrowAmountMXNB) <= 0) return "0";
+  const getSimulatedDeposit = (borrowAmountMXNE: string): string => {
+    if (!borrowAmountMXNE || parseFloat(borrowAmountMXNE) <= 0) return "0";
     if (oraclePrice === 0n) {
-      const amount = parseFloat(borrowAmountMXNB);
+      const amount = parseFloat(borrowAmountMXNE);
       const safePrice = 17;
       const requiredWmUSDC = amount / (TARGET_LTV * safePrice);
       return requiredWmUSDC.toFixed(2);
     }
     try {
-      const borrowAssets = ethers.parseUnits(borrowAmountMXNB, MXNB_DECIMALS);
+      const borrowAssets = ethers.parseUnits(borrowAmountMXNE, MXNE_DECIMALS);
       const TARGET_LTV_WAD = ethers.parseEther(TARGET_LTV.toString());
       const numerator = borrowAssets * 10n ** 54n;
       const denominator = oraclePrice * TARGET_LTV_WAD;
@@ -251,7 +251,7 @@ export const useMorphoLoan = () => {
 
   // ─── SERVER-SIDE SIGNING ──────────────────────────────────────────────────
 
-  const executeZale = async (borrowAmountMXNB: string) => {
+  const executeZale = async (borrowAmountMXNE: string) => {
     setLoading(true);
     setError(null);
     setStep(1);
@@ -268,12 +268,12 @@ export const useMorphoLoan = () => {
 
       // Calculate required USDC deposit
       const oracle = new ethers.Contract(
-        MXNB_MARKET_PARAMS.oracle,
+        MXNE_MARKET_PARAMS.oracle,
         ["function price() external view returns (uint256)"],
         provider,
       );
       const currentPrice = await oracle.price();
-      const borrowAmountBN = ethers.parseUnits(borrowAmountMXNB, MXNB_DECIMALS);
+      const borrowAmountBN = ethers.parseUnits(borrowAmountMXNE, MXNE_DECIMALS);
       const TARGET_LTV_WAD = ethers.parseEther("0.50");
       const numerator = borrowAmountBN * 10n ** 54n;
       const denominator = currentPrice * TARGET_LTV_WAD;
@@ -367,7 +367,7 @@ export const useMorphoLoan = () => {
       // Wait for collateral to index
       await new Promise((resolve) => setTimeout(resolve, 5000));
 
-      // Step 4: Borrow MXNB
+      // Step 4: Borrow MXNE
       setStep(4);
       const borrowRes = await fetch("/api/borrow", {
         method: "POST",
@@ -375,7 +375,7 @@ export const useMorphoLoan = () => {
         body: JSON.stringify({
           walletId,
           userAddress,
-          borrowAmount: borrowAmountMXNB,
+          borrowAmount: borrowAmountMXNE,
         }),
       });
       const borrowData = await borrowRes.json();
@@ -426,8 +426,8 @@ export const useMorphoLoan = () => {
         ERC20_ABI,
         provider,
       );
-      const mxnbContract = new ethers.Contract(
-        CONTRACT_ADDRESSES.mockMXNB,
+      const mxneContract = new ethers.Contract(
+        CONTRACT_ADDRESSES.mockMXNE,
         ERC20_ABI,
         provider,
       );
@@ -436,11 +436,11 @@ export const useMorphoLoan = () => {
         ethers.AbiCoder.defaultAbiCoder().encode(
           ["address", "address", "address", "address", "uint256"],
           [
-            MXNB_MARKET_PARAMS.loanToken,
-            MXNB_MARKET_PARAMS.collateralToken,
-            MXNB_MARKET_PARAMS.oracle,
-            MXNB_MARKET_PARAMS.irm,
-            MXNB_MARKET_PARAMS.lltv,
+            MXNE_MARKET_PARAMS.loanToken,
+            MXNE_MARKET_PARAMS.collateralToken,
+            MXNE_MARKET_PARAMS.oracle,
+            MXNE_MARKET_PARAMS.irm,
+            MXNE_MARKET_PARAMS.lltv,
           ],
         ),
       );
@@ -451,8 +451,8 @@ export const useMorphoLoan = () => {
 
       if (borrowShares <= 0n) throw new Error("No debt to repay.");
 
-      const mxnbBal = await mxnbContract.balanceOf(userAddress);
-      setTotalRepaidAmount(ethers.formatUnits(mxnbBal, MXNB_DECIMALS));
+      const mxneBal = await mxneContract.balanceOf(userAddress);
+      setTotalRepaidAmount(ethers.formatUnits(mxneBal, MXNE_DECIMALS));
 
       // Step 0: Calculate interest to pay via API
       setStep(12);
@@ -468,8 +468,8 @@ export const useMorphoLoan = () => {
       if (!subsidyRes.ok) throw new Error(subsidyData.error ?? "Failed to calculate interest subsidy");
 
       const estimatedSubsidyUSDC = subsidyData.subsidyInUSDC;
-      const estimatedSubsidyMXNB = subsidyData.subsidyInMXNB;
-      console.log(`User Subsidy: ${estimatedSubsidyUSDC} USDC (${estimatedSubsidyMXNB} MXNB)`);
+      const estimatedSubsidyMXNE = subsidyData.subsidyInMXNE;
+      console.log(`User Subsidy: ${estimatedSubsidyUSDC} USDC (${estimatedSubsidyMXNE} MXNe)`);
 
       // Step 1: Repay with exact shares — closes position completely without dust
       const repayRes = await fetch("/api/repay", {
@@ -557,9 +557,9 @@ export const useMorphoLoan = () => {
 
       const rawPaidSubsidyUSDC = await wmUSDCContract.userPaidSubsidyInUSDC(userAddress);
       const paidSubsidyUSDC = ethers.formatUnits(rawPaidSubsidyUSDC, 6);
-      console.log(`Paid Subsidy: ${paidSubsidyUSDC} USDC (${estimatedSubsidyMXNB} MXNB, ${estimatedSubsidyUSDC})`);
+      console.log(`Paid Subsidy: ${paidSubsidyUSDC} USDC (${estimatedSubsidyMXNE} MXNE, ${estimatedSubsidyUSDC})`);
       setUserPaidSubsidyInUSDC(paidSubsidyUSDC);
-      setUserInterestInMxnb(estimatedSubsidyMXNB);
+      setUserInterestInMxne(estimatedSubsidyMXNE);
       setUserInterestInUSDC(estimatedSubsidyUSDC);
 
       await refreshData();
@@ -580,7 +580,7 @@ export const useMorphoLoan = () => {
     setTxHash(null);
     setLoading(false);
     setUserPaidSubsidyInUSDC("0");
-    setUserInterestInMxnb("0");
+    setUserInterestInMxne("0");
   };
 
   return {
@@ -589,14 +589,14 @@ export const useMorphoLoan = () => {
     error,
     txHash,
     usdcBalance,
-    mxnbBalance,
+    mxneBalance,
     collateralBalance,
     borrowBalance,
     marketLiquidity,
     marketAPR: (marketAPR * 100).toFixed(2),
     totalRepaidAmount,
     userPaidSubsidyInUSDC,
-    userInterestInMxnb,
+    userInterestInMxne,
     userInterestInUSDC,
     getSimulatedDeposit,
     executeZale,

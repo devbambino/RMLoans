@@ -22,7 +22,7 @@ export default function RendimientoRapido() {
         loading,
         step,
         error,
-        mxnbBalance,
+        mxneBalance,
         vaultAssetsBalance,
         tvl,
         apy,
@@ -54,7 +54,7 @@ export default function RendimientoRapido() {
     // Steps mapping
     const getStepLabel = (s: number) => {
         switch (s) {
-            case 1: return "Approving MXNB...";
+            case 1: return "Approving MXNe...";
             case 2: return "Depositing in Vault...";
             case 3: return "Confirming...";
             case 11: return "Withdrawing Liquidity...";
@@ -64,15 +64,15 @@ export default function RendimientoRapido() {
 
     // Derived states
     const hasLiquidity = parseFloat(vaultAssetsBalance) > 0;
-    const isInsufficientBalance = depositAmount && parseFloat(depositAmount) > parseFloat(mxnbBalance);
+    const isInsufficientBalance = depositAmount && parseFloat(depositAmount) > parseFloat(mxneBalance);
 
     const balanceRows: BalanceItem[][] = [
         [
-            { label: "Available MXNB", value: `${mxnbBalance} MXNB`, icon: WalletIcon, highlightValue: true },
-            { label: "Your Liquidity", value: `${vaultAssetsBalance} MXNB`, icon: CircleStackIcon }
+            { label: "Available MXNe", value: `${mxneBalance} MXNe`, icon: WalletIcon, highlightValue: true },
+            { label: "Your Liquidity", value: `${vaultAssetsBalance} MXNe`, icon: CircleStackIcon }
         ],
         [
-            { label: "TVL", value: `${tvl} MXNB`, icon: BanknotesIcon },
+            { label: "TVL", value: `${tvl} MXNe`, icon: BanknotesIcon },
             { label: "APY", value: `${apy}%`, icon: ChartBarIcon }
         ]
     ];
@@ -87,7 +87,7 @@ export default function RendimientoRapido() {
                     <div className="flex items-center justify-between mb-8">
                         <div>
                             <h2 className="text-2xl w-fit mb-2 border-b-4 border-[#264c73] font-bold text-white">
-                                MXNB Yield
+                                MXNe Yield
                             </h2>
                             <p className="text-sm font-bold text-[#4fe3c3] mt-1">Provide liquidity and earn interest</p>
                         </div>
@@ -140,11 +140,11 @@ export default function RendimientoRapido() {
                                         <div className="text-sm bg-[#0a0a0a] border border-[#264c73] p-4 rounded-lg space-y-2 text-left">
                                             <div className="flex justify-between">
                                                 <span className="text-gray-200">Total Withdrawn:</span>
-                                                <span className="text-white font-mono">{withdrawnAmount} MXNB</span>
+                                                <span className="text-white font-mono">{withdrawnAmount} MXNe</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-200">Yield Generated:</span>
-                                                <span className="text-[#4fe3c3] font-mono">{yieldEarned || "0.00"} MXNB</span>
+                                                <span className="text-[#4fe3c3] font-mono">{yieldEarned || "0.00"} MXNe</span>
                                             </div>
                                         </div>
                                     </div>
@@ -161,11 +161,11 @@ export default function RendimientoRapido() {
                                 <div className="space-y-6 py-2">
                                     {!loading && (
                                         <Input
-                                            label="How much MXNB do you want to deposit?"
-                                            symbol="MXNB"
+                                            label="How much MXNe do you want to deposit?"
+                                            symbol="MXNE"
                                             value={depositAmount}
                                             onChange={(e) => setDepositAmount(e.target.value)}
-                                            onMaxClick={() => setDepositAmount(mxnbBalance)}
+                                            onMaxClick={() => setDepositAmount(mxneBalance)}
                                             errorMessage={isInsufficientBalance ? "Insufficient balance" : null}
                                         />
                                     )}
@@ -214,7 +214,7 @@ export default function RendimientoRapido() {
                                             onClick={handleDeposit}
                                             disabled={!depositAmount || parseFloat(depositAmount) <= 0 || isInsufficientBalance}
                                         >
-                                            Deposit MXNB
+                                            Deposit MXNe
                                         </Button>
                                     )}
 

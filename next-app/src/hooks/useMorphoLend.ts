@@ -10,11 +10,11 @@ import {
   VAULT_ABI,
   MORPHO_ABI,
   IRM_ABI,
-  MXNB_MARKET_PARAMS,
+  MXNE_MARKET_PARAMS,
   MARKET_IDS,
 } from "../constants/contracts";
 
-const MXNB_DECIMALS = 6;
+const MXNE_DECIMALS = 6;
 
 const EXTENDED_VAULT_ABI = [
   ...VAULT_ABI,
@@ -31,7 +31,7 @@ export const useMorphoLend = () => {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [withdrawnAmount, setWithdrawnAmount] = useState<string | null>(null);
   const [yieldEarned, setYieldEarned] = useState<string | null>(null);
-  const [mxnbBalance, setMxnbBalance] = useState<string>("0.000");
+  const [mxneBalance, setMxneBalance] = useState<string>("0.000");
   const [vaultSharesBalance, setVaultSharesBalance] = useState<string>("0.000");
   const [vaultAssetsBalance, setVaultAssetsBalance] = useState<string>("0.000");
   const [tvl, setTvl] = useState<string>("0.000");
@@ -60,7 +60,7 @@ export const useMorphoLend = () => {
         MORPHO_ABI,
         provider,
       );
-      const marketDetails = await morphoContract.market(MARKET_IDS.mxnb);
+      const marketDetails = await morphoContract.market(MARKET_IDS.mxne);
       const totalSupplyAssets = Number(
         ethers.formatUnits(marketDetails.totalSupplyAssets, 6),
       );
@@ -72,7 +72,7 @@ export const useMorphoLend = () => {
       setTotalBorrowed(totalBorrowAssets);
 
       const irmContract = new ethers.Contract(
-        MXNB_MARKET_PARAMS.irm,
+        MXNE_MARKET_PARAMS.irm,
         IRM_ABI,
         provider,
       );
@@ -86,11 +86,11 @@ export const useMorphoLend = () => {
       ];
       const borrowRate = await irmContract.borrowRateView(
         [
-          MXNB_MARKET_PARAMS.loanToken,
-          MXNB_MARKET_PARAMS.collateralToken,
-          MXNB_MARKET_PARAMS.oracle,
-          MXNB_MARKET_PARAMS.irm,
-          MXNB_MARKET_PARAMS.lltv,
+          MXNE_MARKET_PARAMS.loanToken,
+          MXNE_MARKET_PARAMS.collateralToken,
+          MXNE_MARKET_PARAMS.oracle,
+          MXNE_MARKET_PARAMS.irm,
+          MXNE_MARKET_PARAMS.lltv,
         ],
         marketTuple,
       );
@@ -112,19 +112,19 @@ export const useMorphoLend = () => {
       if (!userAddress) return;
 
       const provider = getProvider();
-      const mxnbContract = new ethers.Contract(
-        CONTRACT_ADDRESSES.mockMXNB,
+      const mxneContract = new ethers.Contract(
+        CONTRACT_ADDRESSES.mockMXNE,
         ERC20_ABI,
         provider,
       );
       const vaultContract = new ethers.Contract(
-        CONTRACT_ADDRESSES.morphoMXNBVault,
+        CONTRACT_ADDRESSES.morphoMXNEVault,
         EXTENDED_VAULT_ABI,
         provider,
       );
 
-      const [mxnbBal, sharesBal, totalAssetsVal] = await Promise.all([
-        mxnbContract.balanceOf(userAddress),
+      const [mxneBal, sharesBal, totalAssetsVal] = await Promise.all([
+        mxneContract.balanceOf(userAddress),
         vaultContract.balanceOf(userAddress),
         vaultContract.totalAssets(),
       ]);
@@ -134,10 +134,10 @@ export const useMorphoLend = () => {
         assetsBal = await vaultContract.convertToAssets(sharesBal);
       }
 
-      setMxnbBalance(formatBalance(mxnbBal, MXNB_DECIMALS));
-      setVaultSharesBalance(formatBalance(sharesBal, MXNB_DECIMALS));
-      setVaultAssetsBalance(formatBalance(assetsBal, MXNB_DECIMALS));
-      setTvl(formatBalance(totalAssetsVal, MXNB_DECIMALS));
+      setMxneBalance(formatBalance(mxneBal, MXNE_DECIMALS));
+      setVaultSharesBalance(formatBalance(sharesBal, MXNE_DECIMALS));
+      setVaultAssetsBalance(formatBalance(assetsBal, MXNE_DECIMALS));
+      setTvl(formatBalance(totalAssetsVal, MXNE_DECIMALS));
 
       await fetchMarketData();
     } catch (err) {
@@ -183,7 +183,7 @@ export const useMorphoLend = () => {
 
   // ─── SERVER-SIDE SIGNING ──────────────────────────────────────────────────
 
-  const executeDeposit = async (amountMXNB: string) => {
+  const executeDeposit = async (amountMXNE: string) => {
     setLoading(true);
     setError(null);
     setStep(1);
@@ -198,7 +198,7 @@ export const useMorphoLend = () => {
 
       const provider = getProvider();
       const vaultContract = new ethers.Contract(
-        CONTRACT_ADDRESSES.morphoMXNBVault,
+        CONTRACT_ADDRESSES.morphoMXNEVault,
         EXTENDED_VAULT_ABI,
         provider,
       );
@@ -208,10 +208,10 @@ export const useMorphoLend = () => {
 
       // Step 1+2: Approve + Deposit via backend
       setStep(2);
-      const res = await fetch("/api/lend-mxnb", {
+      const res = await fetch("/api/lend-mxne", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletId, userAddress, amount: amountMXNB }),
+        body: JSON.stringify({ walletId, userAddress, amount: amountMXNE }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Deposit failed");
@@ -255,7 +255,7 @@ export const useMorphoLend = () => {
 
       const provider = getProvider();
       const vaultContract = new ethers.Contract(
-        CONTRACT_ADDRESSES.morphoMXNBVault,
+        CONTRACT_ADDRESSES.morphoMXNEVault,
         EXTENDED_VAULT_ABI,
         provider,
       );
@@ -274,11 +274,11 @@ export const useMorphoLend = () => {
 
       // Preview redeem amount
       const expectedAssets = await vaultContract.previewRedeem(sharesToRedeem);
-      setWithdrawnAmount(ethers.formatUnits(expectedAssets, MXNB_DECIMALS));
+      setWithdrawnAmount(ethers.formatUnits(expectedAssets, MXNE_DECIMALS));
 
       console.log("Withdrawing shares:", sharesToRedeem.toString());
 
-      const res = await fetch("/api/withdraw-mxnb", {
+      const res = await fetch("/api/withdraw-mxne", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -319,7 +319,7 @@ export const useMorphoLend = () => {
     step,
     error,
     txHash,
-    mxnbBalance,
+    mxneBalance,
     vaultSharesBalance,
     vaultAssetsBalance,
     tvl,
