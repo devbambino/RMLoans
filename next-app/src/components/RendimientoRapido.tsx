@@ -12,6 +12,9 @@ import {
     WalletIcon,
     CurrencyDollarIcon
 } from "@heroicons/react/24/outline";
+import BalancesGrid, { BalanceItem } from "./BalancesGrid";
+import Input from "./Input";
+import Button from "./Button";
 
 export default function RendimientoRapido() {
     const { authenticated, login } = usePrivy();
@@ -63,6 +66,17 @@ export default function RendimientoRapido() {
     const hasLiquidity = parseFloat(vaultAssetsBalance) > 0;
     const isInsufficientBalance = depositAmount && parseFloat(depositAmount) > parseFloat(mxnbBalance);
 
+    const balanceRows: BalanceItem[][] = [
+        [
+            { label: "Available MXNB", value: `${mxnbBalance} MXNB`, icon: WalletIcon, highlightValue: true },
+            { label: "Your Liquidity", value: `${vaultAssetsBalance} MXNB`, icon: CircleStackIcon }
+        ],
+        [
+            { label: "TVL", value: `${tvl} MXNB`, icon: BanknotesIcon },
+            { label: "APY", value: `${apy}%`, icon: ChartBarIcon }
+        ]
+    ];
+
     return (
         <div className="w-full max-w-md mx-auto p-1">
             <div className="relative overflow-hidden rounded-2xl bg-[#0a0a0a] border border-[#264c73] shadow-2xl backdrop-blur-xl">
@@ -85,48 +99,14 @@ export default function RendimientoRapido() {
                     {!authenticated ? (
                         <div className="text-center py-12">
                             <p className="text-gray-200 mb-6">Connect your wallet to get started</p>
-                            <button
-                                onClick={login}
-                                className="w-full cursor-pointer py-3 px-4 bg-[#264c73] hover:bg-[#4fe3c3] text-white hover:text-[#0a0a0a] font-semibold rounded-xl transition-all"
-                            >
+                            <Button onClick={login}>
                                 Connect Wallet
-                            </button>
+                            </Button>
                         </div>
                     ) : (
                         <>
                             {/* Balances Grid */}
-                            <div className="grid grid-cols-2 gap-2 mb-6 p-2 mt-14 bg-[#0a0a0a] rounded-xl">
-                                {/* Row 1 */}
-                                <div className="text-center p-2">
-                                    <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
-                                        <WalletIcon className="w-3 h-3 text-[#4fe3c3]" /> Available MXNB
-                                    </div>
-                                    <div className="font-mono text-xs text-white truncate">{mxnbBalance} MXNB</div>
-                                </div>
-                                <div className="text-center p-2 border-l border-[#264c73]">
-                                    <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
-                                        <CircleStackIcon className="w-3 h-3 text-[#4fe3c3]" /> Your Liquidity
-                                    </div>
-                                    <div className="font-mono text-xs text-gray-200 truncate">{vaultAssetsBalance} MXNB</div>
-                                </div>
-
-                                {/* Row 2 separator */}
-                                <div className="col-span-2 h-px bg-[#264c73] my-1" />
-
-                                {/* Row 2 */}
-                                <div className="text-center p-2">
-                                    <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
-                                        <BanknotesIcon className="w-3 h-3 text-[#4fe3c3]" /> TVL
-                                    </div>
-                                    <div className="font-mono text-xs text-gray-200 truncate">{tvl} MXNB</div>
-                                </div>
-                                <div className="text-center p-2 border-l border-[#264c73]">
-                                    <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
-                                        <ChartBarIcon className="w-3 h-3 text-[#4fe3c3]" /> APY
-                                    </div>
-                                    <div className="font-mono text-xs text-gray-200 truncate">{apy}%</div>
-                                </div>
-                            </div>
+                            <BalancesGrid rows={balanceRows} columns={2} className="mb-6 mt-14" />
 
                             {/* Main Content Area */}
                             {step === 4 && !loading ? (
@@ -142,12 +122,12 @@ export default function RendimientoRapido() {
                                         </p>
                                     </div>
 
-                                    <button
+                                    <Button
                                         onClick={handleReset}
-                                        className="w-full cursor-pointer py-4 px-6 bg-[#264c73] hover:bg-[#4fe3c3] text-white hover:text-[#0a0a0a] font-bold rounded-xl transition-all transform hover:-translate-y-1"
+                                        className="transform hover:-translate-y-1"
                                     >
                                         Make Another Deposit
-                                    </button>
+                                    </Button>
                                 </div>
                             ) : step === 12 && !loading ? (
                                 /* Success Screen (Withdrawal) */
@@ -169,45 +149,25 @@ export default function RendimientoRapido() {
                                         </div>
                                     </div>
 
-                                    <button
+                                    <Button
                                         onClick={handleReset}
-                                        className="w-full cursor-pointer py-4 px-6 bg-[#264c73] hover:bg-[#4fe3c3] text-white hover:text-[#0a0a0a] font-bold rounded-xl transition-all transform hover:-translate-y-1"
+                                        className="transform hover:-translate-y-1"
                                     >
                                         Back to Home
-                                    </button>
+                                    </Button>
                                 </div>
                             ) : (
                                 /* Input Section */
                                 <div className="space-y-6 py-2">
                                     {!loading && (
-                                        <div className="group">
-                                            <label className="block text-xs font-medium text-white mb-2 uppercase tracking-wide">
-                                                How much MXNB do you want to deposit?
-                                            </label>
-                                            <div className="relative">
-                                                <input
-                                                    type="number"
-                                                    value={depositAmount}
-                                                    onChange={(e) => setDepositAmount(e.target.value)}
-                                                    placeholder="0.00"
-                                                    className="w-full bg-[#0a0a0a] border border-[#264c73] rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:border-[#4fe3c3] transition-all placeholder:text-gray-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                />
-                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                                    <span className="text-sm font-semibold text-gray-200">MXNB</span>
-                                                    <button
-                                                        onClick={() => setDepositAmount(mxnbBalance)}
-                                                        className="text-[10px] text-[#4fe3c3] uppercase font-bold hover:underline"
-                                                    >
-                                                        Max
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            {isInsufficientBalance && (
-                                                <div className="text-xs text-[#4fe3c3] mt-2 flex items-center gap-1">
-                                                    ⚠️ Insufficient balance
-                                                </div>
-                                            )}
-                                        </div>
+                                        <Input
+                                            label="How much MXNB do you want to deposit?"
+                                            symbol="MXNB"
+                                            value={depositAmount}
+                                            onChange={(e) => setDepositAmount(e.target.value)}
+                                            onMaxClick={() => setDepositAmount(mxnbBalance)}
+                                            errorMessage={isInsufficientBalance ? "Insufficient balance" : null}
+                                        />
                                     )}
 
                                     {/* Progress Stepper */}
@@ -250,28 +210,23 @@ export default function RendimientoRapido() {
 
                                     {/* Deposit Button */}
                                     {!loading && (
-                                        <button
+                                        <Button
                                             onClick={handleDeposit}
                                             disabled={!depositAmount || parseFloat(depositAmount) <= 0 || isInsufficientBalance}
-                                            className={`w-full cursor-pointer py-4 px-6 rounded-xl font-bold text-lg transition-all 
-                                                ${(!depositAmount || parseFloat(depositAmount) <= 0 || isInsufficientBalance)
-                                                    ? 'bg-[#0a0a0a] text-gray-200 border border-[#264c73] cursor-not-allowed'
-                                                    : 'bg-[#264c73] hover:bg-[#4fe3c3] text-white hover:text-[#0a0a0a] border border-[#264c73]'
-                                                }
-                                            `}
                                         >
                                             Deposit MXNB
-                                        </button>
+                                        </Button>
                                     )}
 
                                     {/* Withdraw Button */}
                                     {hasLiquidity && !loading && (
-                                        <button
+                                        <Button
+                                            isWithdraw
                                             onClick={handleWithdrawAll}
-                                            className="w-full mt-2 cursor-pointer py-3 px-6 rounded-xl font-bold text-sm bg-[#0a0a0a] text-[#4fe3c3] border border-[#264c73] hover:bg-[#264c73] hover:text-white transition-all"
+                                            className="mt-2"
                                         >
                                             Withdraw All
-                                        </button>
+                                        </Button>
                                     )}
                                 </div>
                             )}

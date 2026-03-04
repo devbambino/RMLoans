@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useMorphoLoan } from "../hooks/useMorphoLoan";
 import { usePrivy } from "@privy-io/react-auth";
 import { CheckCircleIcon, ArrowPathIcon, BanknotesIcon, CircleStackIcon, LockClosedIcon, CreditCardIcon, ChartBarIcon } from "@heroicons/react/24/outline";
+import BalancesGrid, { BalanceItem } from "./BalancesGrid";
+import Input from "./Input";
+import Button from "./Button";
 
 export default function PrestamoRapido() {
     const { authenticated, login } = usePrivy();
@@ -49,8 +52,21 @@ export default function PrestamoRapido() {
     };
 
     // Derived state for validation
-    const isExceedingLiquidity = borrowAmount && parseFloat(borrowAmount) > parseFloat(marketLiquidity);
+    const isExceedingLiquidity = Boolean(borrowAmount && parseFloat(borrowAmount) > parseFloat(marketLiquidity));
     const isInsufficientBalance = parseFloat(usdcBalance) < parseFloat(requiredDeposit || "0");
+
+    const balanceRows: BalanceItem[][] = [
+        [
+            { label: "USDC", value: `${usdcBalance} USDC`, icon: CircleStackIcon, highlightValue: true },
+            { label: "MXNB", value: `${mxnbBalance} MXNB`, icon: BanknotesIcon, highlightValue: true },
+            { label: "Collateral", value: `${collateralBalance} WmUSDC`, icon: LockClosedIcon }
+        ],
+        [
+            { label: "Current Debt", value: `${borrowBalance} MXNB`, icon: CreditCardIcon },
+            { label: "Rate (APR)", value: `${marketAPR}%`, icon: ChartBarIcon },
+            { label: "Liquidity", value: `${marketLiquidity} MXNB`, icon: CircleStackIcon }
+        ]
+    ];
 
     return (
         <div className="w-full max-w-md mx-auto p-1">
@@ -74,59 +90,14 @@ export default function PrestamoRapido() {
                     {!authenticated ? (
                         <div className="text-center py-12">
                             <p className="text-gray-200 mb-6">Connect your wallet to get started</p>
-                            <button
-                                onClick={login}
-                                className="w-full py-3 px-4 bg-[#264c73] hover:bg-[#4fe3c3] text-white hover:text-[#0a0a0a] font-semibold rounded-xl transition-all"
-                            >
+                            <Button onClick={login}>
                                 Connect Wallet
-                            </button>
+                            </Button>
                         </div>
                     ) : (
                         <>
                             {/* Balances Grid */}
-                            <div className="grid grid-cols-3 gap-2 mb-2 p-2 mt-16 bg-[#0a0a0a] rounded-xl">
-                                {/* Row 1 */}
-                                <div className="text-center">
-                                    <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
-                                        <CircleStackIcon className="w-3 h-3 text-[#4fe3c3]" /> USDC
-                                    </div>
-                                    <div className="font-mono text-xs text-white truncate">{usdcBalance} USDC</div>
-                                </div>
-                                <div className="text-center border-l border-[#264c73]">
-                                    <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
-                                        <BanknotesIcon className="w-3 h-3 text-[#4fe3c3]" /> MXNB
-                                    </div>
-                                    <div className="font-mono text-xs text-white truncate">{mxnbBalance} MXNB</div>
-                                </div>
-                                <div className="text-center border-l border-[#264c73]">
-                                    <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
-                                        <LockClosedIcon className="w-3 h-3 text-[#4fe3c3]" /> Collateral
-                                    </div>
-                                    <div className="font-mono text-xs text-gray-200 truncate">{collateralBalance} WmUSDC</div>
-                                </div>
-
-                                {/* Row 2 (New Stats) */}
-                                <div className="col-span-3 h-px bg-[#264c73] my-1" />
-
-                                <div className="text-center">
-                                    <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
-                                        <CreditCardIcon className="w-3 h-3 text-[#4fe3c3]" /> Current Debt
-                                    </div>
-                                    <div className="font-mono text-xs text-gray-200 truncate">{borrowBalance} MXNB</div>
-                                </div>
-                                <div className="text-center border-l border-[#264c73]">
-                                    <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
-                                        <ChartBarIcon className="w-3 h-3 text-[#4fe3c3]" /> Rate (APR)
-                                    </div>
-                                    <div className="font-mono text-xs text-gray-200 truncate">{marketAPR}%</div>
-                                </div>
-                                <div className="text-center border-l border-[#264c73]">
-                                    <div className="text-[10px] uppercase text-white font-bold mb-1 flex items-center justify-center gap-1">
-                                        <CircleStackIcon className="w-3 h-3 text-[#4fe3c3]" /> Liquidity
-                                    </div>
-                                    <div className="font-mono text-xs text-gray-200 truncate">{marketLiquidity} MXNB</div>
-                                </div>
-                            </div>
+                            <BalancesGrid rows={balanceRows} columns={3} className="mb-2 mt-16" />
 
                             {step === 8 ? (
                                 <div className="py-8 text-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
@@ -140,15 +111,15 @@ export default function PrestamoRapido() {
                                         </p>
                                     </div>
 
-                                    <button
+                                    <Button
                                         onClick={() => {
                                             setBorrowAmount("");
                                             resetState();
                                         }}
-                                        className="w-full cursor-pointer py-4 px-6 bg-[#264c73] hover:bg-[#4fe3c3] text-white hover:text-[#0a0a0a] font-bold rounded-xl transition-all transform hover:-translate-y-1"
+                                        className="transform hover:-translate-y-1"
                                     >
                                         Perform Another Operation
-                                    </button>
+                                    </Button>
                                 </div>
                             ) : step === 16 ? (
                                 <div className="py-8 text-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
@@ -184,37 +155,27 @@ export default function PrestamoRapido() {
                                         </div>
                                     </div>
 
-                                    <button
+                                    <Button
                                         onClick={() => {
                                             setBorrowAmount("");
                                             resetState();
                                         }}
-                                        className="w-full cursor-pointer py-4 px-6 bg-[#264c73] hover:bg-[#4fe3c3] text-white hover:text-[#0a0a0a] font-bold rounded-xl transition-all transform hover:-translate-y-1"
+                                        className="transform hover:-translate-y-1"
                                     >
                                         Back to Home
-                                    </button>
+                                    </Button>
                                 </div>
                             ) : (
                                 /* Input Section */
                                 <div className="space-y-6 py-6">
-                                    <div className="group">
-                                        <label className="block text-xs font-medium text-white mb-2 uppercase tracking-wide">
-                                            How much MXNB do you want to receive?
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type="number"
-                                                value={borrowAmount}
-                                                onChange={(e) => setBorrowAmount(e.target.value)}
-                                                placeholder="0.00"
-                                                className="w-full bg-[#0a0a0a] border border-[#264c73] rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:border-[#4fe3c3] transition-all placeholder:text-gray-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                disabled={loading}
-                                            />
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                                <span className="text-sm font-semibold text-gray-200">MXNB</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <Input
+                                        label="How much MXNB do you want to receive?"
+                                        symbol="MXNB"
+                                        value={borrowAmount}
+                                        onChange={(e) => setBorrowAmount(e.target.value)}
+                                        disabled={loading}
+                                        errorMessage={isExceedingLiquidity ? "Insufficient liquidity in market" : null}
+                                    />
 
                                     {/* Simulation Output */}
                                     <div className="p-4 rounded-xl bg-[#0a0a0a] border border-[#264c73] space-y-3">
@@ -230,11 +191,6 @@ export default function PrestamoRapido() {
                                         {isInsufficientBalance && (
                                             <div className="text-xs text-[#4fe3c3] mt-2 flex items-center gap-1">
                                                 ⚠️ Insufficient balance
-                                            </div>
-                                        )}
-                                        {isExceedingLiquidity && (
-                                            <div className="text-xs text-[#4fe3c3] mt-2 flex items-center gap-1">
-                                                ⚠️ Insufficient liquidity in market
                                             </div>
                                         )}
                                     </div>
@@ -298,17 +254,10 @@ export default function PrestamoRapido() {
                                     )}
 
                                     {/* Action Button */}
-                                    <button
+                                    <Button
                                         onClick={handleBorrow}
                                         disabled={loading || !borrowAmount || parseFloat(borrowAmount) <= 0 || isInsufficientBalance || isExceedingLiquidity}
-                                        className={`w-full cursor-pointer py-4 px-6 rounded-xl font-bold text-lg transition-all 
-        ${(loading || !borrowAmount || parseFloat(borrowAmount) <= 0)
-                                                ? 'bg-[#0a0a0a] text-gray-200 cursor-not-allowed border border-[#264c73]'
-                                                : (isInsufficientBalance || isExceedingLiquidity)
-                                                    ? 'bg-[#0a0a0a] text-gray-200 border border-[#264c73] cursor-not-allowed'
-                                                    : 'bg-[#264c73] hover:bg-[#4fe3c3] text-white hover:text-[#0a0a0a] border border-[#264c73]'
-                                            }
-    `}
+                                        className="w-full mt-6 bg-[#4fe3c3] text-black font-bold py-4 rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {loading ? (
                                             <span className="flex items-center justify-center gap-2 text-[#4fe3c3]">
@@ -320,16 +269,17 @@ export default function PrestamoRapido() {
                                         ) : (
                                             "Deposit and Borrow"
                                         )}
-                                    </button>
+                                    </Button>
 
                                     {/* Repay Button - Only show if user has debt or collateral */}
                                     {(!loading && (parseFloat(borrowBalance) > 0 || parseFloat(collateralBalance) > 0)) && (
-                                        <button
+                                        <Button
+                                            isWithdraw
                                             onClick={executeRepayAndWithdraw}
-                                            className="w-full mt-4 cursor-pointer py-3 px-6 rounded-xl font-bold text-sm bg-[#0a0a0a] text-[#4fe3c3] border border-[#264c73] hover:bg-[#264c73] hover:text-white transition-all"
+                                            className="mt-4"
                                         >
                                             Pay All and Withdraw
-                                        </button>
+                                        </Button>
                                     )}
                                 </div>
                             )}
