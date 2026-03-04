@@ -232,6 +232,23 @@ export const useMorphoLoan = () => {
     );
   };
 
+  const waitForSubsidyIncrease = async (
+    tokenContract: ethers.Contract,
+    userAddress: string,
+    initialBalance: bigint
+  ) => {
+    let retries = 0;
+    while (retries < 15) {
+      const currentBalance = await tokenContract.userInterestSubsidyInWmUSDC(userAddress);
+      if (currentBalance > initialBalance) return currentBalance;
+
+      console.log(`Waiting for subsidy update... Attempt ${retries + 1}/15`);
+      await new Promise(resolve => setTimeout(resolve, 2500)); // Wait 2.5s
+      retries++;
+    }
+    throw new Error("RPC timeout: The network is slow indexing your new subsidy. Please wait a moment and try again.");
+  };
+
   // ─── SERVER-SIDE SIGNING ──────────────────────────────────────────────────
 
   const executeZale = async (borrowAmountMXNB: string) => {
@@ -437,8 +454,24 @@ export const useMorphoLoan = () => {
       const mxnbBal = await mxnbContract.balanceOf(userAddress);
       setTotalRepaidAmount(ethers.formatUnits(mxnbBal, MXNB_DECIMALS));
 
-      // Step 1: Repay with exact shares — closes position completely without dust
+      // Step 0: Calculate interest to pay via API
       setStep(12);
+      const subsidyRes = await fetch("/api/get-interest-subsidy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          walletId,
+          userAddress,
+        }),
+      });
+      const subsidyData = await subsidyRes.json();
+      if (!subsidyRes.ok) throw new Error(subsidyData.error ?? "Failed to calculate interest subsidy");
+
+      const estimatedSubsidyUSDC = subsidyData.subsidyInUSDC;
+      const estimatedSubsidyMXNB = subsidyData.subsidyInMXNB;
+      console.log(`User Subsidy: ${estimatedSubsidyUSDC} USDC (${estimatedSubsidyMXNB} MXNB)`);
+
+      // Step 1: Repay with exact shares — closes position completely without dust
       const repayRes = await fetch("/api/repay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -521,6 +554,14 @@ export const useMorphoLoan = () => {
       console.log("Redeem done:", redeemData);
 
       setStep(16); // Success
+
+      const rawPaidSubsidyUSDC = await wmUSDCContract.userPaidSubsidyInUSDC(userAddress);
+      const paidSubsidyUSDC = ethers.formatUnits(rawPaidSubsidyUSDC, 6);
+      console.log(`Paid Subsidy: ${paidSubsidyUSDC} USDC (${estimatedSubsidyMXNB} MXNB, ${estimatedSubsidyUSDC})`);
+      setUserPaidSubsidyInUSDC(paidSubsidyUSDC);
+      setUserInterestInMxnb(estimatedSubsidyMXNB);
+      setUserInterestInUSDC(estimatedSubsidyUSDC);
+
       await refreshData();
       setLoading(false);
     } catch (err: any) {

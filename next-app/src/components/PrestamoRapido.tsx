@@ -137,7 +137,7 @@ export default function PrestamoRapido() {
                                                 <span className="text-gray-200">Status:</span>
                                                 <span className="text-[#4fe3c3]">Debt Settled</span>
                                             </div>
-                                            {parseFloat(userPaidSubsidyInUSDC || "0") > 0 && (
+                                            {parseFloat(userInterestInUSDC || "0") > 0 && (
                                                 <>
                                                     <div className="h-px bg-[#264c73] my-2" />
                                                     <div className="text-center">
@@ -148,7 +148,7 @@ export default function PrestamoRapido() {
                                                     <div className="flex justify-between">
                                                         <span className="text-gray-200">We gave you:</span>
                                                         <span className="text-white font-mono">{userInterestInMxnb} MXNB (~= {userInterestInUSDC})</span>
-                                                        <span className="text-xs text-gray-200 font-mono">(Approx. {userInterestInUSDC} USDC)</span>
+                                                        <span className="text-xs text-gray-200 font-mono">(Approx. {userPaidSubsidyInUSDC} USDC)</span>
                                                     </div>
                                                 </>
                                             )}
