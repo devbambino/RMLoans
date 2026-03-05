@@ -557,10 +557,19 @@ export const useMorphoLoan = () => {
 
       const rawPaidSubsidyUSDC = await wmUSDCContract.userPaidSubsidyInUSDC(userAddress);
       const paidSubsidyUSDC = ethers.formatUnits(rawPaidSubsidyUSDC, 6);
-      console.log(`Paid Subsidy: ${paidSubsidyUSDC} USDC (${estimatedSubsidyMXNE} MXNE, ${estimatedSubsidyUSDC})`);
-      setUserPaidSubsidyInUSDC(paidSubsidyUSDC);
-      setUserInterestInMxne(estimatedSubsidyMXNE);
-      setUserInterestInUSDC(estimatedSubsidyUSDC);
+      console.log(`Paid Subsidy: ${paidSubsidyUSDC} USDC (${subsidyData.rawSubsidyMXNE} MXNE, ${subsidyData.rawSubsidyUSDC} USDC)`);
+      if (parseFloat(paidSubsidyUSDC || "0") > 0) {
+        setUserPaidSubsidyInUSDC(paidSubsidyUSDC);
+        setUserInterestInMxne(estimatedSubsidyMXNE);
+        setUserInterestInUSDC(estimatedSubsidyUSDC);
+      } else {
+        const subsidyMXNE = parseFloat(subsidyData.rawSubsidyMXNE || "0");
+        let paidUSDC = subsidyMXNE * Number(10n ** 36n) / Number(oraclePrice);
+        setUserPaidSubsidyInUSDC(ethers.formatUnits(paidUSDC, 18));
+        setUserInterestInMxne(estimatedSubsidyMXNE);
+        setUserInterestInUSDC(ethers.formatUnits(paidUSDC, 18));
+      }
+
 
       await refreshData();
       setLoading(false);

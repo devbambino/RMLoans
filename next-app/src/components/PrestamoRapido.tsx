@@ -137,7 +137,7 @@ export default function PrestamoRapido() {
                                                 <span className="text-gray-200">Status:</span>
                                                 <span className="text-[#4fe3c3]">Debt Settled</span>
                                             </div>
-                                            {parseFloat(userInterestInUSDC || "0") > 0 && (
+                                            {parseFloat(userPaidSubsidyInUSDC || "0") > 0 && (
                                                 <>
                                                     <div className="h-px bg-[#264c73] my-2" />
                                                     <div className="text-center">

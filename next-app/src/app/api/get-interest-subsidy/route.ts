@@ -123,6 +123,8 @@ export async function POST(req: Request) {
       args: [addr],
     });
 
+    console.log("Raw Final subsidy:", { finalSubsidyUSDC, rawSubsidyMXNE });
+
     const subsidyInUSDC = ethers.formatUnits(finalSubsidyUSDC, 18);
     const subsidyInMXNE = ethers.formatUnits(rawSubsidyMXNE, 6);
 
