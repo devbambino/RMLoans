@@ -3,14 +3,15 @@ import { NextResponse } from "next/server";
 import { encodeFunctionData, createPublicClient, getAddress, http } from "viem";
 import { baseSepolia } from "viem/chains";
 import { privyRpc } from "@/lib/privy-signer";
+import { CONTRACT_ADDRESSES } from "@/constants/contracts";
 
 const publicClient = createPublicClient({
   chain: baseSepolia,
   transport: http(),
 });
 
-const USDC = "0xba50cd2a20f6da35d788639e581bca8d0b5d4d5f";
-const MXNE = "0xF19D2F986DC0fb7E2A82cb9b55f7676967F7bC3E";
+const USDC = CONTRACT_ADDRESSES.usdc;
+const MXNE = CONTRACT_ADDRESSES.mockMXNE;
 
 const erc20Abi = [
   {

@@ -3,9 +3,10 @@ import { NextResponse } from "next/server";
 import { encodeFunctionData, createPublicClient, getAddress, http } from "viem";
 import { baseSepolia } from "viem/chains";
 import { privyRpc } from "@/lib/privy-signer";
+import { CONTRACT_ADDRESSES } from "@/constants/contracts";
 
 const publicClient = createPublicClient({ chain: baseSepolia, transport: http() });
-const MXNE_VAULT = "0x3F8FAB03021738f227e3Ad76da51f57522540d30";
+const MXNE_VAULT = CONTRACT_ADDRESSES.morphoMXNEVault;
 
 const vaultAbi = [{ name: "redeem", type: "function", stateMutability: "nonpayable", inputs: [{ name: "shares", type: "uint256" }, { name: "receiver", type: "address" }, { name: "owner", type: "address" }], outputs: [{ name: "", type: "uint256" }] }] as const;
 

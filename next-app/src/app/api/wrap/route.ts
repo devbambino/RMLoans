@@ -9,14 +9,15 @@ import {
 } from "viem";
 import { baseSepolia } from "viem/chains";
 import { privyRpc } from "@/lib/privy-signer";
+import { CONTRACT_ADDRESSES } from "@/constants/contracts";
 
 const publicClient = createPublicClient({
   chain: baseSepolia,
   transport: http(),
 });
 
-const MORPHO_USDC_VAULT = "0xA694354Ab641DFB8C6fC47Ceb9223D12cCC373f9";
-const WM_USDC = "0xBDc7fCDAC92DEe5220215aB6a0f5E1B20A665CD4";
+const MORPHO_USDC_VAULT = CONTRACT_ADDRESSES.morphoUSDCVault;
+const WM_USDC = CONTRACT_ADDRESSES.wmUSDC;
 
 const vaultAbi = [
   {

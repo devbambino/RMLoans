@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 import { encodeFunctionData, parseUnits, createPublicClient, getAddress, http, maxUint256 } from "viem";
 import { baseSepolia } from "viem/chains";
 import { privyRpc } from "@/lib/privy-signer";
+import { CONTRACT_ADDRESSES } from "@/constants/contracts";
 
 const publicClient = createPublicClient({ chain: baseSepolia, transport: http() });
-const USDC = "0xba50cd2a20f6da35d788639e581bca8d0b5d4d5f";
-const MORPHO_USDC_VAULT = "0xA694354Ab641DFB8C6fC47Ceb9223D12cCC373f9";
+const USDC = CONTRACT_ADDRESSES.usdc;
+const MORPHO_USDC_VAULT = CONTRACT_ADDRESSES.morphoUSDCVault;
 
 const erc20Abi = [{ name: "approve", type: "function", stateMutability: "nonpayable", inputs: [{ name: "spender", type: "address" }, { name: "amount", type: "uint256" }], outputs: [{ name: "", type: "bool" }] }] as const;
 const vaultAbi = [{ name: "deposit", type: "function", stateMutability: "nonpayable", inputs: [{ name: "assets", type: "uint256" }, { name: "receiver", type: "address" }], outputs: [] }] as const;
