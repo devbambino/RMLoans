@@ -336,6 +336,8 @@ Edit `next-app/src/constants/contracts.ts` with deployed contract addresses from
 
 ## 💻 Smart Contract Overview
 
+All the smart contracts are located at `/contracts` folder in the root.
+
 ### 1. **MockMXNE.sol**
 ERC-20 token representing Mexican Peso stablecoin. 
 - 6 decimals (matches USDC)
@@ -352,8 +354,35 @@ Price oracle providing WmUSDC/MXNE exchange rate for Morpho Blue markets.
 - Safe pricing for risk management
 - 77% LTV (Loan-to-Value) ratio
 
-### 4. **MXNEFaucet.sol** (Testnet)
+### 4. **DebtLens.sol** 
+Contract that interacts with the Morpho MXNe market to calculate the user's accrued interest.
+
+### 5. **MXNEFaucet.sol** (Testnet)
 Faucet contract for minting test MXNE tokens during development.
+
+---
+
+## 💻 Proof Of Deployments
+
+### Smart Contracts Deployed to Base Sepolia
+```bash
+# Base Sepolia Mock Token Addresses
+mockMXNE: "0xC7b61E7Ae2BdE11cC34D47971EBC7d95AA638803"
+mockETH: "0x1ddebA64A8B13060e13d15504500Dd962eECD35B"
+
+# Wrapper & Vault Addresses
+wmUSDC: "0x0E01950150Dc5DE0cBaEE3BF86ACb93D276CCAcc",
+morphoUSDCVault: "0xA694354Ab641DFB8C6fC47Ceb9223D12cCC373f9",
+morphoMXNEVault: "0x961648C5D237d1c2Ea15675f32ec00d37052Ee27",
+
+# Oracle Addresses
+wmusdcMxneOracle: "0x21aE644311f44237241e8b320d344C29cB3Bbc4c",
+ethUsdcOracle: "0x97EBCdb0F784CDc9F91490bEBC9C8756491814a3",
+
+# Additional Tools
+mxneFaucet: "0xF3388E7AF4503a700261ef3f16a91AC98B2B35B5"
+debtLens: "0x14751F624968372878cDE4238e84Fb3D980C4F05"
+```
 
 ---
 
