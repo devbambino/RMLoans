@@ -1,8 +1,13 @@
+> [!IMPORTANT]
+> Due to the complexity of our logic/architecture, RapiLoans requires intensive testing and contract auditing before deployment to Mainnet. The PoC is working on Base Sepolia. You will need Sepolia ETH, USDC(Aave's version of USDC) and mockMXNE(our version of MXNe) for testing the Borrow and Lend features. For getting the tokens you need to:
+> 1. We've created a smart contract faucet for mockMXNE tokens, deployed to Base Sepolia. You only need to send Sepolia ETH from your wallet to the SC's address(`0xF3388E7AF4503a700261ef3f16a91AC98B2B35B5`) in Base Sepolia and the SC will automatically transfer back the corresponding amount of mockMXNE tokens(the FX rate is 1 ETH to 33548.87 mockMXNE). The Faucet smart contract is located at `/contracts/MXNEFacucet.sol`. For checking the real time liquidity of the faucet in Sepolia Basescan [click here](https://sepolia.basescan.org/address/0xF3388E7AF4503a700261ef3f16a91AC98B2B35B5), which is nearly 100M mockMXNE.
+> 2. For simplicity we decided to use Aave's USDC which already have a faucet available in Base Sepolia. To get the USDC [click here](https://app.aave.com/faucet/), please remember to enable the Testnet mode in Aave first.
+
 # RapiLoans 💰
 
-**Instant MXNB loans. Zero interest. Powered by Base.**
+**Instant MXNE loans. Zero interest. Powered by Base.**
 
-RapiLoans, by RapiMoni, enables users to access instant loans in MXNB (Bitso's Mexican Peso stablecoin) by collateralizing USDC, with **0% interest rates subsidized by the RapiLoans protocol**. Built on Base for speed, low costs, and accessibility to the Latin American market.
+RapiLoans, by RapiMoni, enables users to access instant loans in MXNE (EtherFuse's Mexican Peso stablecoin) by collateralizing USDC, with **0% interest rates subsidized by the RapiLoans protocol**. Built on Base for speed, low costs, and accessibility to the Latin American market.
 
 ---
 
@@ -10,12 +15,27 @@ RapiLoans, by RapiMoni, enables users to access instant loans in MXNB (Bitso's M
 
 ### Problem
 
-**The Gap in Latin American DeFi:**
+Latin American users face a "liquidity trap": they hold crypto or USD stablecoins to hedge against inflation, but traditional credit in local currency (like the Mexican Peso) is predatory, with interest rates often hitting 30%+. Existing DeFi lending options are equally insufficient for daily needs because they primarily offer USD-pegged loans with 5-15% APR borrowing costs and require high technical friction. This leaves millions of un/underbanked users unable to access affordable, local-currency liquidity without selling their assets and triggering tax events or losing their market positions.
 
-- 💳 **Limited local currency lending**: Traditional DeFi offers few options for borrowing in local fiat-backed stablecoins (like MXNB)
-- ⚠️ **High borrowing costs**: Existing lending protocols charge 5-15% APY, making short-term loans expensive
-- ❌ **Liquidity barriers**: Mexican and Latin American users struggle to access fast, affordable loans without KYC-heavy traditional banking
+**The Gap in Latin American Credit:**
+
+- ❌ **Liquidity barriers**: Mexican and Latin American users struggle to access fast loans without KYC-heavy traditional banking, or really high interest rates (30% and more)
 - ⏰ **Slow transaction times**: Traditional lending takes days; users need capital urgently
+- 💳 **Limited local currency DeFi lending**: Traditional DeFi offers few/no options for borrowing in local fiat-backed stablecoins (like MXNE)
+- ⚠️ **High DeFi borrowing costs**: Existing DeFi lending protocols charge 5-15% APY, in USD stablecoins, making short-term loans expensive
+
+**The Scope:**
+
+LatinAmerica and other Global-South markets with large un/underbanked populations and high remittance flows. This matters because access to fast working capital (for merchants, remittances recipients, traders, freelancers, etc) directly improves economic inclusion, reduces FX friction, and enables crypto users to transact locally without converting to/from volatile crypto or enduring slow bank rails.
+
+**The User:**
+Our primary persona is "Mateo," a crypto-native freelancer or small business owner in Mexico. Mateo receives payments in USDC but has daily expenses (rent, payroll, supplies) in Mexican Pesos.
+
+- **Needs**: Fast access to MXNe without selling his USDC or navigating a 3-day bank approval process with a extremely high loan denial rate.
+- **Goals**: Maintain his long-term savings in USDC while using it as leverage for short-term working capital or local purchasing power; avoid costly bank loans and FX spreads.
+- **Frustrations**: Predatory local bank rates (30%+), high gas fees on other chains, lack of DeFi protocols that support local stablecoins like MXNe, severe loan denials due to a lack of formal credit history, slow bank transfers, complex onboarding
+
+This is primarily B2C (consumers, small merchants), with B2B extensions (merchant payouts, remittance integrators) later.
 
 ### Solution
 
@@ -23,11 +43,11 @@ RapiLoans, by RapiMoni, enables users to access instant loans in MXNB (Bitso's M
 
 RapiLoans provides:
 - ✅ **0% interest rate** — Ingeniously subsidized by capturing Morpho USDC yield from collateral
-- ⚡ **Instant liquidity** — Borrow MXNB in minutes, not days
-- 🔒 **Overcollateralization model** — Supply USDC, borrow MXNB with predictable liquidation mechanics
+- ⚡ **Instant liquidity** — Borrow MXNE in minutes, not days
+- 🔒 **Overcollateralization model** — Supply USDC, borrow MXNE with predictable liquidation mechanics
 - 🌐 **Non-custodial** — Users maintain full control via smart contracts on Base
 - 📱 **Simple UX** — Intuitive web interface for wallet connection, collateral supply, and borrowing
-- 💎 **Sustainable model** — Lenders earn 6.5-9.5% APY; protocol revenue comes from yield spread, not user extraction
+- 💎 **Sustainable model** — Lenders earn base Morpho MXNE yield plus USDC rewards coming from the Morpho USDC yield generated (total of 6-15% APY); protocol revenue comes from yield spread, not user extraction
 
 ### Market Opportunity
 
@@ -43,15 +63,15 @@ RapiLoans provides:
 ### Customer Segments
 
 1. **Crypto-Native Traders & Arbitrageurs**
-   - Use USDC to take leveraged positions in MXNB
+   - Use USDC to take leveraged positions in MXNE
    - Need fast, cheap capital for short-term opportunities
 
 2. **Mexican & Latin American Crypto Users**
-   - Want to borrow in local currency equivalents (MXNB)
+   - Want to borrow in local currency equivalents (MXNE)
    - Avoid traditional banking friction and high rates
 
 3. **Remittance & Cross-Border Payment Users**
-   - Receive USDC internationally, borrow MXNB locally
+   - Receive USDC internationally, borrow MXNE locally
    - Perfect for migrant workers sending money home
 
 4. **Small Businesses & Merchants**
@@ -69,7 +89,7 @@ RapiLoans provides:
 | **Interest Rate** | 0% (subsidized) | 20-30% | 5-15% APY |
 | **Speed** | Minutes | 3-5 days | Minutes |
 | **KYC Required** | No | Yes | No |
-| **Local Currency** | MXNB | MXN + fees | Limited options |
+| **Local Currency** | MXNE | MXN + fees | Limited options |
 | **Non-Custodial** | Yes | No | Yes |
 | **Chain** | Base | N/A | Multiple / Expensive |
 
@@ -77,7 +97,7 @@ RapiLoans provides:
 
 **Phase 1 (Launch):**
 - Target crypto traders on Base with $1K–$100K USDC collateral
-- Partner with Bitso community for MXNB awareness
+- Partner with Bitso community for MXNE awareness
 - Airdrop incentives for early lenders/borrowers
 
 **Phase 2 (Scale):**
@@ -103,15 +123,15 @@ RapiLoans provides:
 2. Receive Yield-Bearing Collateral
    └─> mUSDC wrapped into WmUSDC (ERC-4626 vault)
 
-3. Borrow MXNB Against Collateral
+3. Borrow MXNE Against Collateral
    └─> Up to 50% LTV on your collateral value
    └─> 0% interest rate 🎉
 
-4. Use MXNB Instantly
+4. Use MXNE Instantly
    └─> Trade, spend, or convert as needed
 
 5. Repay Anytime
-   └─> Return MXNB to unlock collateral + yield
+   └─> Return MXNE to unlock collateral + yield
 ```
 
 ### Technical Architecture
@@ -121,7 +141,7 @@ RapiLoans provides:
 - **Morpho USDC Vault** → Supply USDC, earn yield
 - **WmUSDC (ERC-4626 Wrapper)** → Non-rebasing collateral asset
 - **Morpho Blue Markets** → Uncensorable lending engine
-- **Custom Oracle** → USDC/MXNB price feed for safety
+- **Custom Oracle** → USDC/MXNE price feed for safety
 - **Frontend UI** → Simple, non-custodial interface
 
 **Why Base?**
@@ -172,12 +192,12 @@ USDC Deposits → Morpho Yield → Protocol Capital → 0% APR + Incentives
 
 **3. Borrower Uses Collateral at 0% APR**
 - Borrower locks WmUSDC as collateral
-- Borrows MXNB at **0% interest rate** (fully subsidized)
+- Borrows MXNE at **0% interest rate** (fully subsidized)
 - Collateral continues earning Morpho yield in the background
 
 **4. Protocol Captures Yield at Repayment**
-- When borrower repays MXNB loan, RapiLoans retrieves accrued interest from Morpho's Vaults
-- Converts MXNB interest to WmUSDC equivalent via oracle
+- When borrower repays MXNE loan, RapiLoans retrieves accrued interest from Morpho's Vaults
+- Converts MXNE interest to WmUSDC equivalent via oracle
 - **Uses protocol-owned yield to pay back the interest subsidy**
 - Any excess yield becomes protocol revenue, and it is available for rewards and incentives for lenders/borrowers
 
@@ -195,11 +215,12 @@ USDC Deposits → Morpho Yield → Protocol Capital → 0% APR + Incentives
 **Scenario: $10M TVL in Morpho USDC Vault**
 
 ```
-Annual Morpho Yield Generated:    $10M × 10% = $1,000,000
-├─ Loan Interest Subsidies:       $400,000 (covers 0% APR)
-├─ Lender Incentives (APY boost): $300,000 (3% bonus APY in USDC)
-├─ Protocol Revenue:              $250,000 (kept by DAO/treasury)
-└─ Buffer/Insurance:              $50,000 (liquidation safety)
+Annual USDC Collateral TVL:       $10M
+├─ Loans Generated:               $5M (up to 50% of $10M USDC collateral)
+├─ USDC Yield Generated:          $500,000 (5% of $10M USDC collateral)
+├──  Loan Interest Subsidies:       $250,000 (up to 50% of yield as APR subsidies)
+├──  Lender Incentives:             $150,000 (up to 30% of yield as Bonus APY)
+└──  Protocol Revenue:              $100,000 (up to 20% of yield kept by DAO/treasury)
 ```
 
 ### The GTM Advantage
@@ -207,8 +228,8 @@ Annual Morpho Yield Generated:    $10M × 10% = $1,000,000
 This model is a **game-changing Go-to-Market strategy**:
 
 ✅ **Attract Early Lenders:**
-- Lenders earn Morpho yield (5-10% base) + up to 50% in incentive APY
-- Total yield: **10-20% APY** (far better than traditional options)
+- Lenders earn Morpho yield (5-10% base) + up to 30% of USDC yield as incentive APY
+- Total yield: **7-13% APY** (far better than traditional options)
 
 ✅ **Subsidize Borrowers to Scale:**
 - 0% APR costs nothing to borrowers
@@ -236,8 +257,8 @@ This model is a **game-changing Go-to-Market strategy**:
 
 **RapiLoans Model:**
 - Borrow APY: 0% (subsidized from yield)
-- Lend APY: 5-10% (Morpho + incentives)
-- Spread: 5-10% to protocol from USDC yield ✓
+- Lend APY: 7-13% (Morpho + incentives)
+- Spread: 10-20% to protocol from USDC yield ✓
 - Advantage: Users flock to better rates; TVL grows faster; revenue scales massively
 
 ---
@@ -256,7 +277,7 @@ This model is a **game-changing Go-to-Market strategy**:
 - TailwindCSS for styling
 
 **Infrastructure:**
-- Base Mainnet (official deployment chain)
+- Base Testnet (official deployment chain)
 - The Graph for subgraph indexing
 - IPFS for decentralized storage
 
@@ -269,7 +290,7 @@ This model is a **game-changing Go-to-Market strategy**:
 - Node.js 18+
 - pnpm (recommended) or npm
 - MetaMask or compatible Web3 wallet
-- USDC and MXNB on Base Mainnet
+- USDC and MXNE on Base Mainnet
 
 ### Installation
 
@@ -288,6 +309,10 @@ cp .env.example .env.local
 # Update `.env.local` with your Privy app credentials:
 # Public - Safe to expose in the browser
 NEXT_PUBLIC_PRIVY_APP_ID=your_app_id_here
+PRIVY_APP_SECRET=your_privy_app_secret
+BASE_SEPOLIA_RPC=https://sepolia.base.org
+PRIVY_SIGNING_KEY=wallet-auth:signing_key
+NEXT_PUBLIC_PRIVY_SIGNER_ID=your_signer_id
 
 # Start development server
 pnpm dev
@@ -295,12 +320,12 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### Deployment to Base Mainnet
+### Deployment to Base Testnet
 
 You need to follow these steps:
 ```bash
 # 1. Deploy WmUSDC, and oracle contracts (if needed)
-# 2. Create USDC/MXNB lending market on Morpho Blue
+# 2. Create USDC/MXNE lending market on Morpho Blue
 # 3. Output market IDs for frontend configuration
 ```
 
@@ -311,7 +336,7 @@ Edit `next-app/src/constants/contracts.ts` with deployed contract addresses from
 
 ## 💻 Smart Contract Overview
 
-### 1. **MockMXNB.sol**
+### 1. **MockMXNE.sol**
 ERC-20 token representing Mexican Peso stablecoin. 
 - 6 decimals (matches USDC)
 - Owner-controlled minting for initial liquidity
@@ -322,13 +347,13 @@ ERC-4626 vault wrapper around Morpho's mUSDC token.
 - Price per share increases as Morpho yields accrue
 - Enables collateral to earn yield while borrowed
 
-### 3. **WmusdcMxnbOracle.sol**
-Price oracle providing WmUSDC/MXNB exchange rate for Morpho Blue markets.
+### 3. **WmusdcMxneOracle.sol**
+Price oracle providing WmUSDC/MXNE exchange rate for Morpho Blue markets.
 - Safe pricing for risk management
 - 77% LTV (Loan-to-Value) ratio
 
-### 4. **MXNBFaucet.sol** (Testnet)
-Faucet contract for minting test MXNB tokens during development.
+### 4. **MXNEFaucet.sol** (Testnet)
+Faucet contract for minting test MXNE tokens during development.
 
 ---
 
@@ -337,10 +362,10 @@ Faucet contract for minting test MXNB tokens during development.
 **RapiLoans creates one primary market:**
 
 ```
-Market: MXNB Loan / WmUSDC Collateral
-├─ Loan Token: MXNB
+Market: MXNE Loan / WmUSDC Collateral
+├─ Loan Token: MXNE
 ├─ Collateral Token: WmUSDC (yield-bearing)
-├─ Oracle: WmusdcMxnbOracle
+├─ Oracle: WmusdcMxneOracle
 ├─ Interest Rate Model: 0% (protocol-subsidized)
 ├─ LTV: 50% (derisking)
 └─ LLTV: 77% (liquidation safety)
@@ -357,7 +382,7 @@ Must remain > 1.0 to avoid liquidation
 ## 📱 Frontend Features
 
 **Dashboard:**
-- Real-time wallet balance display (USDC, MXNB, WmUSDC)
+- Real-time wallet balance display (USDC, MXNE, WmUSDC)
 - Active loan status and liquidation risk
 - APY and yield tracking
 
@@ -367,12 +392,12 @@ Must remain > 1.0 to avoid liquidation
 - Supply WmUSDC as collateral
 
 **Borrowing:**
-- Borrow MXNB against WmUSDC collateral
+- Borrow MXNE against WmUSDC collateral
 - See real-time borrowing capacity
 - Track health factor
 
 **Repayment:**
-- Repay MXNB loans anytime, with no penalties
+- Repay MXNE loans anytime, with no penalties
 - Withdraw collateral
 - Claim accrued yield
 
@@ -380,15 +405,24 @@ Must remain > 1.0 to avoid liquidation
 
 ## 🌐 Base Network Details
 
-**Official RapiLoans Chain:** Base Mainnet
+**Official RapiLoans Chain:** Base Testnet 
 
-- **Chain ID:** 42161
-- **RPC:** https://mainnet.base.org
-- **Block Explorer:** https://www.basescan.org/
+- **Chain ID:** 84532
+- **RPC:** https://sepolia.base.org
+- **Block Explorer:** https://sepolia-explorer.base.org
 - **Gas Token:** ETH (native)
 
+**Official RapiLoans Chain:** Base Mainnet
+
+- **Chain ID:** 8453
+- **RPC:** https://mainnet.base.org
+- **Block Explorer:** https://base.blockscout.com/
+- **Gas Token:** ETH (native)
+- **LOAN TOKEN (MXNE):** https://basescan.org/token/0x269cae7dc59803e5c596c95756faeebb6030e0af
+
+
 **Why Base?**
-- Ultra-low transaction fees (~$0.001)
+- Ultra-low transaction fees
 - Fast finality (sub-second)
 - EVM-compatible (deploy Ethereum contracts unchanged)
 - Thriving DeFi ecosystem with deep liquidity
@@ -403,7 +437,7 @@ Must remain > 1.0 to avoid liquidation
 | **Yield** | Morpho USDC Vault | Earn on supplied USDC |
 | **Collateral** | WmUSDC (ERC-4626) | Non-rebasing wrapper for safety |
 | **Lending Engine** | Morpho Blue | Un-censorable market protocol |
-| **Pricing** | WmusdcMxnbOracle | Safe collateral valuation |
+| **Pricing** | WmusdcMxneOracle | Safe collateral valuation |
 | **Wallet** | MetaMask / Privy | User custody & authentication |
 
 ---
@@ -424,19 +458,19 @@ Must remain > 1.0 to avoid liquidation
 ## 🗺️ Roadmap
 
 **Q1 2026:**
-- ✅ Launch on Base Mainnet
-- ✅ Core USDC/MXNB market live
+- ✅ Launch on Base Testnet
+- ✅ Core USDC/MXNE market live
 - Target: $1M initial TVL
 
 **Q2 2026:**
-- Governance token ($RAPI) introduction
+- Governance token ($MONI) introduction
 - Protocol revenue sharing with stakers
 - Remittance partnership pilots
 
 **Q3 2026:**
 - Expand to additional stablecoins (ARS, BRL, COP)
 - Mobile app release
-- Cross-chain bridging (Polygon, Avalanche, Base)
+- Cross-chain bridging (Arbitrum, Avalanche, Solana)
 
 **Q4 2026 & Beyond:**
 - Merchant API for point-of-sale integration
@@ -459,10 +493,10 @@ Powered by **Base**, **Morpho Blue** and Bitso/Juno
 
 Special thanks to:
 - [Morpho Labs](https://morpho.org/) for the lending protocol
-- [Bitso](https://bitso.com/) for MXNB innovation
+- [EtherFuse](https://brale.xyz/stablecoins/MXNe) for MXNE innovation
 - [Base](https://www.base.dev/) for ecosystem support
 
 ---
 
-**Status:** 🚀 Ready for Base Mainnet  
-**Last Updated:** February 2026  
+**Status:** 🚀 Ready for Base Testnet  
+**Last Updated:** March 2026  

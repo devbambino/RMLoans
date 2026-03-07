@@ -45,7 +45,7 @@ export const useMorphoLoan = () => {
     const formatted = ethers.formatUnits(val, decimals);
     const [integer, fraction] = formatted.split(".");
     if (!fraction) return integer;
-    return `${integer}.${fraction.substring(0, 3)}`;
+    return `${integer}.${fraction.substring(0, 1)}`;
   };
 
   // Read-only provider — no wallet signing needed for reads

@@ -23,6 +23,9 @@ export const CONTRACT_ADDRESSES = {
     // Oracle Addresses
     wmusdcMxneOracle: "0x21aE644311f44237241e8b320d344C29cB3Bbc4c",
     ethUsdcOracle: "0x97EBCdb0F784CDc9F91490bEBC9C8756491814a3",
+
+    // Tools for testing
+    mxneFaucet: "0xF3388E7AF4503a700261ef3f16a91AC98B2B35B5"
 };
 
 export const MARKET_IDS = {

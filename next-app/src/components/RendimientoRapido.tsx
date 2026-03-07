@@ -68,12 +68,13 @@ export default function RendimientoRapido() {
 
     const balanceRows: BalanceItem[][] = [
         [
-            { label: "Available MXNe", value: `${mxneBalance} MXNe`, icon: WalletIcon, highlightValue: true },
-            { label: "Your Liquidity", value: `${vaultAssetsBalance} MXNe`, icon: CircleStackIcon }
+            { label: "Your Pesos", value: `${mxneBalance} MXNe`, icon: WalletIcon, highlightValue: true },
+            { label: "Your Deposits", value: `${vaultAssetsBalance} MXNe`, icon: CircleStackIcon }
         ],
+
         [
-            { label: "TVL", value: `${tvl} MXNe`, icon: BanknotesIcon },
-            { label: "APY", value: `${apy}%`, icon: ChartBarIcon }
+            { label: "APY", value: `${apy}%`, icon: ChartBarIcon },
+            { label: "TVL", value: `${tvl} MXNe`, icon: BanknotesIcon }
         ]
     ];
 
@@ -141,10 +142,6 @@ export default function RendimientoRapido() {
                                             <div className="flex justify-between">
                                                 <span className="text-gray-200">Total Withdrawn:</span>
                                                 <span className="text-white font-mono">{withdrawnAmount} MXNe</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-200">Yield Generated:</span>
-                                                <span className="text-[#4fe3c3] font-mono">{yieldEarned || "0.00"} MXNe</span>
                                             </div>
                                         </div>
                                     </div>

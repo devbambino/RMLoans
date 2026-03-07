@@ -1,3 +1,8 @@
+> [!IMPORTANT]
+> Due to the complexity of our logic/architecture, RapiLoans requires intensive testing and contract auditing before deployment to Mainnet. The PoC is working on Base Sepolia. You will need Sepolia ETH, USDC(Aave's version of USDC) and mockMXNE(our version of MXNe) for testing the Borrow and Lend features. For getting the tokens you need to:
+> 1. We've created a smart contract faucet for mockMXNE tokens, deployed to Base Sepolia. You only need to send Sepolia ETH from your wallet to the SC's address(`0xF3388E7AF4503a700261ef3f16a91AC98B2B35B5`) in Base Sepolia and the SC will automatically transfer back the corresponding amount of mockMXNE tokens(the FX rate is 1 ETH to 33548.87 mockMXNE). The Faucet smart contract is located at `/contracts/MXNEFacucet.sol`. For checking the real time liquidity of the faucet in Sepolia Basescan [click here](https://sepolia.basescan.org/address/0xF3388E7AF4503a700261ef3f16a91AC98B2B35B5), which is nearly 100M mockMXNE.
+> 2. For simplicity we decided to use Aave's USDC which already have a faucet available in Base Sepolia. To get the USDC [click here](https://app.aave.com/faucet/), please remember to enable the Testnet mode in Aave first.
+
 # RapiLoans 💰
 
 **Instant MXNE loans. Zero interest. Powered by Base.**
@@ -26,9 +31,9 @@ LatinAmerica and other Global-South markets with large un/underbanked population
 **The User:**
 Our primary persona is "Mateo," a crypto-native freelancer or small business owner in Mexico. Mateo receives payments in USDC but has daily expenses (rent, payroll, supplies) in Mexican Pesos.
 
-- **Needs**: Fast access to MXNB without selling his USDC or navigating a 3-day bank approval process with a extremely high loan denial rate.
+- **Needs**: Fast access to MXNe without selling his USDC or navigating a 3-day bank approval process with a extremely high loan denial rate.
 - **Goals**: Maintain his long-term savings in USDC while using it as leverage for short-term working capital or local purchasing power; avoid costly bank loans and FX spreads.
-- **Frustrations**: Predatory local bank rates (30%+), high gas fees on other chains, lack of DeFi protocols that support local stablecoins like MXNB, severe loan denials due to a lack of formal credit history, slow bank transfers, complex onboarding
+- **Frustrations**: Predatory local bank rates (30%+), high gas fees on other chains, lack of DeFi protocols that support local stablecoins like MXNe, severe loan denials due to a lack of formal credit history, slow bank transfers, complex onboarding
 
 This is primarily B2C (consumers, small merchants), with B2B extensions (merchant payouts, remittance integrators) later.
 
@@ -42,7 +47,7 @@ RapiLoans provides:
 - 🔒 **Overcollateralization model** — Supply USDC, borrow MXNE with predictable liquidation mechanics
 - 🌐 **Non-custodial** — Users maintain full control via smart contracts on Base
 - 📱 **Simple UX** — Intuitive web interface for wallet connection, collateral supply, and borrowing
-- 💎 **Sustainable model** — Lenders earn 6.5-9.5% APY; protocol revenue comes from yield spread, not user extraction
+- 💎 **Sustainable model** — Lenders earn base Morpho MXNE yield plus USDC rewards coming from the Morpho USDC yield generated (total of 6-15% APY); protocol revenue comes from yield spread, not user extraction
 
 ### Market Opportunity
 
@@ -210,11 +215,12 @@ USDC Deposits → Morpho Yield → Protocol Capital → 0% APR + Incentives
 **Scenario: $10M TVL in Morpho USDC Vault**
 
 ```
-Annual Morpho Yield Generated:    $10M × 10% = $1,000,000
-├─ Loan Interest Subsidies:       $400,000 (covers 0% APR)
-├─ Lender Incentives (APY boost): $300,000 (3% bonus APY in USDC)
-├─ Protocol Revenue:              $250,000 (kept by DAO/treasury)
-└─ Buffer/Insurance:              $50,000 (liquidation safety)
+Annual USDC Collateral TVL:       $10M
+├─ Loans Generated:               $5M (up to 50% of $10M USDC collateral)
+├─ USDC Yield Generated:          $500,000 (5% of $10M USDC collateral)
+├──  Loan Interest Subsidies:       $250,000 (up to 50% of yield as APR subsidies)
+├──  Lender Incentives:             $150,000 (up to 30% of yield as Bonus APY)
+└──  Protocol Revenue:              $100,000 (up to 20% of yield kept by DAO/treasury)
 ```
 
 ### The GTM Advantage
@@ -222,8 +228,8 @@ Annual Morpho Yield Generated:    $10M × 10% = $1,000,000
 This model is a **game-changing Go-to-Market strategy**:
 
 ✅ **Attract Early Lenders:**
-- Lenders earn Morpho yield (5-10% base) + up to 50% in incentive APY from generated USDC yield
-- Total yield: **10-20% APY** (far better than traditional options)
+- Lenders earn Morpho yield (5-10% base) + up to 30% of USDC yield as incentive APY
+- Total yield: **7-13% APY** (far better than traditional options)
 
 ✅ **Subsidize Borrowers to Scale:**
 - 0% APR costs nothing to borrowers
@@ -251,8 +257,8 @@ This model is a **game-changing Go-to-Market strategy**:
 
 **RapiLoans Model:**
 - Borrow APY: 0% (subsidized from yield)
-- Lend APY: 5-10% (Morpho + incentives)
-- Spread: 5-10% to protocol from USDC yield ✓
+- Lend APY: 7-13% (Morpho + incentives)
+- Spread: 10-20% to protocol from USDC yield ✓
 - Advantage: Users flock to better rates; TVL grows faster; revenue scales massively
 
 ---
@@ -493,4 +499,4 @@ Special thanks to:
 ---
 
 **Status:** 🚀 Ready for Base Testnet  
-**Last Updated:** February 2026  
+**Last Updated:** March 2026  
