@@ -97,7 +97,7 @@ export async function POST(req: Request) {
     let retries = 0;
     let finalSubsidyUSDC = initialRawSubsidyUSDC;
     
-    while (retries < 15) {
+    while (retries < 5) {
       const currentBalance = await publicClient.readContract({
         address: WM_USDC as `0x${string}`,
         abi: wmUsdcAbi,
@@ -111,7 +111,7 @@ export async function POST(req: Request) {
       }
 
       console.log(`Waiting for subsidy update... Attempt ${retries + 1}/15`);
-      await new Promise((r) => setTimeout(r, 2500));
+      await new Promise((r) => setTimeout(r, 3000));
       retries++;
     }
 

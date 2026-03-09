@@ -566,9 +566,8 @@ export const useMorphoLoan = () => {
         const subsidyMXNE = parseFloat(subsidyData.rawSubsidyMXNE || "0");
         let paidUSDC = subsidyMXNE * Number(10n ** 36n) / Number(oraclePrice);
         setUserInterestInMxne(estimatedSubsidyMXNE);
-        setUserInterestInUSDC(ethers.formatUnits(paidUSDC, 18));
+        setUserInterestInUSDC(ethers.formatUnits(parseInt("" + paidUSDC), 18));
       }
-
 
       await refreshData();
       setLoading(false);
