@@ -51,7 +51,7 @@ RapiLoans provides:
 
 **Feature Prioritization Framework**
 
-We have created a comprenhensive list of prioritized features for the RapiLoans protocol to guide development from Proof of Concept (PoC) to Mainnet Launch. To see the framework [click here](https://github.com/semillainnolabs/RMLoans/blob/main/FEATURE_PRIORITIZATION.md)
+We have created a comprenhensive list of prioritized features for the RapiLoans protocol to guide development from Proof of Concept (PoC) to Mainnet Launch. To see the framework [click here](https://github.com/devbambino/RMLoans/blob/main/FEATURE_PRIORITIZATION.md)
 
 ### Market Opportunity
 
