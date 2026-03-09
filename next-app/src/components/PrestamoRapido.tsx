@@ -89,9 +89,9 @@ export default function PrestamoRapido() {
 
                     {!authenticated ? (
                         <div className="text-center py-12">
-                            <p className="text-gray-200 mb-6">Connect your wallet to get started</p>
+                            <p className="text-gray-200 mb-6">Sign In/Up to get started</p>
                             <Button onClick={login}>
-                                Connect Wallet
+                                Sign In/Up
                             </Button>
                         </div>
                     ) : (
@@ -162,7 +162,7 @@ export default function PrestamoRapido() {
                                                 <span className="text-gray-200">Status:</span>
                                                 <span className="text-[#4fe3c3]">Debt Repaid</span>
                                             </div>
-                                            {parseFloat(userPaidSubsidyInUSDC || "0") > 0 && (
+                                            {parseFloat(userPaidSubsidyInUSDC || "0") > 0 ? (
                                                 <>
                                                     <div className="h-px bg-[#264c73] my-6" />
                                                     <div className="text-center">
@@ -173,6 +173,19 @@ export default function PrestamoRapido() {
                                                     <div className="flex flex-col items-center justify-center gap-2">
                                                         <span className="text-gray-200">We gave you (approx.):</span>
                                                         <span className="text-xl text-[#4fe3c3] font-bold font-mono">$USD {userPaidSubsidyInUSDC}</span>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="h-px bg-[#264c73] my-6" />
+                                                    <div className="text-center">
+                                                        <div className="text-xs text-[#4fe3c3] font-semibold mb-2 flex items-center justify-center gap-1">
+                                                            💰 Not enough USDC yield was generated so we couldn't subsidized your loan interest!!!
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col items-center justify-center gap-2">
+                                                        <span className="text-gray-200">We would have gave you (approx.):</span>
+                                                        <span className="text-xl text-[#4fe3c3] font-bold font-mono">$USD {userInterestInUSDC}</span>
                                                     </div>
                                                 </>
                                             )}

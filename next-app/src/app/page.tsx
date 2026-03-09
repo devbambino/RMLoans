@@ -80,7 +80,7 @@ function Home() {
           </div>
           <div className="w-full max-w-md mt-4">
             <Button onClick={login}>
-              Connect Wallet or Create Account
+              Sign In/Up to Start
             </Button>
           </div>
         </section>

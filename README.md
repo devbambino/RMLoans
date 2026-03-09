@@ -49,6 +49,10 @@ RapiLoans provides:
 - 📱 **Simple UX** — Intuitive web interface for wallet connection, collateral supply, and borrowing
 - 💎 **Sustainable model** — Lenders earn base Morpho MXNE yield plus USDC rewards coming from the Morpho USDC yield generated (total of 6-15% APY); protocol revenue comes from yield spread, not user extraction
 
+**Feature Prioritization Framework**
+
+We have created a comprenhensive list of prioritized features for the RapiLoans protocol to guide development from Proof of Concept (PoC) to Mainnet Launch. To see the framework [click here](https://github.com/semillainnolabs/RLavax/blob/main/FEATURE_PRIORITIZATION.md)
+
 ### Market Opportunity
 
 **tam (Total Addressable Market):**
