@@ -1,8 +1,7 @@
-// src/hooks/useTokenTransfer.ts
-import { useState } from "react";
-import { ethers } from "ethers";
-import { useWallets } from "@privy-io/react-auth";
-import { useWalletId } from "./useWalletId";
+import { useState } from 'react';
+import { useWallets } from '@privy-io/react-auth';
+import { useWalletId } from './useWalletId';
+import { handleTransactionError } from '../utils/web3Utils';
 
 export const useTokenTransfer = () => {
   const { wallets } = useWallets();
@@ -11,25 +10,23 @@ export const useTokenTransfer = () => {
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
 
-  const execute = async (
-    currency: "USDC" | "MXNE",
-    amount: string,
-    recipientAddress: string,
-  ) => {
+  const execute = async (currency: "USDC" | "MXNE", amount: string, recipientAddress: string) => {
     setIsLoading(true);
     setError(null);
     setTxHash(null);
 
     try {
-      if (!ethers.isAddress(recipientAddress)) {
-        throw new Error(
-          "Invalid recipient address. Please check the address and try again.",
-        );
+      if (!walletId) {
+        throw new Error("Wallet ID is not loaded yet. Please wait and try again.");
       }
 
       const userAddress = wallets[0]?.address;
-      if (!walletId || !userAddress) {
-        throw new Error("Wallet not ready. Please try again in a moment.");
+      if (!userAddress) {
+        throw new Error("Wallet not connected");
+      }
+
+      if (!/^0x[a-fA-F0-9]{40}$/.test(recipientAddress)) {
+        throw new Error("Invalid recipient address. Please check the address and try again.");
       }
 
       const res = await fetch("/api/transfer", {
@@ -40,26 +37,27 @@ export const useTokenTransfer = () => {
           userAddress,
           currency,
           amount,
-          recipientAddress,
+          recipientAddress
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Transfer failed");
 
-      setTxHash(data.txHash);
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "The transaction failed. Please try again.");
+      }
+
+      if (data.success && data.txHash) {
+        setTxHash(data.txHash);
+      } else if (data.txHash) {
+        // Fallback in case success boolean is not passed but txHash is
+        setTxHash(data.txHash);
+      }
+
       setIsLoading(false);
     } catch (err: any) {
       console.error("Transfer Error:", err);
-      let msg = err.message || "Transaction failed";
-      if (msg.includes("rejected"))
-        msg = "You rejected the transaction in your wallet.";
-      else if (
-        msg.includes("insufficient balance") ||
-        msg.toLowerCase().includes("exceeds balance")
-      )
-        msg = "Insufficient balance for transfer.";
-      else msg = "The transaction failed. Please try again.";
-      setError(msg);
+      setError(handleTransactionError(err));
       setIsLoading(false);
     }
   };

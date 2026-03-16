@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import { useWallets } from "@privy-io/react-auth";
 import { useWalletId } from "./useWalletId";
+import { formatBalance, getProvider, waitForBalanceIncrease, fetchMarketBorrowRate } from "../utils/web3Utils";
 import {
   BASE_SEPOLIA_CONFIG,
   CONTRACT_ADDRESSES,
@@ -41,57 +42,10 @@ export const useMorphoLoan = () => {
   const [userInterestInMxne, setUserInterestInMxne] = useState<string>("0");
   const [userInterestInUSDC, setUserInterestInUSDC] = useState<string>("0");
 
-  const formatBalance = (val: bigint, decimals: number) => {
-    const formatted = ethers.formatUnits(val, decimals);
-    const [integer, fraction] = formatted.split(".");
-    if (!fraction) return integer;
-    return `${integer}.${fraction.substring(0, 1)}`;
-  };
-
-  // Read-only provider — no wallet signing needed for reads
-  const getProvider = useCallback(() => {
-    return new ethers.JsonRpcProvider(BASE_SEPOLIA_CONFIG.rpcUrl);
-  }, []);
-
   const fetchMarketAPR = useCallback(async () => {
     try {
       const provider = getProvider();
-      const morpho = new ethers.Contract(
-        CONTRACT_ADDRESSES.morphoBlue,
-        MORPHO_ABI,
-        provider,
-      );
-      const marketDetails = await morpho.market(MARKET_IDS.mxne);
-      const totalSupplyAssets = Number(
-        ethers.formatUnits(marketDetails.totalSupplyAssets, MXNE_DECIMALS),
-      );
-      const totalBorrowAssets = Number(
-        ethers.formatUnits(marketDetails.totalBorrowAssets, MXNE_DECIMALS),
-      );
-
-      const irmContract = new ethers.Contract(
-        MXNE_MARKET_PARAMS.irm,
-        IRM_ABI,
-        provider,
-      );
-      const marketTuple = [
-        marketDetails[0],
-        marketDetails[1],
-        marketDetails[2],
-        marketDetails[3],
-        marketDetails[4],
-        marketDetails[5],
-      ];
-      const borrowRate = await irmContract.borrowRateView(
-        [
-          MXNE_MARKET_PARAMS.loanToken,
-          MXNE_MARKET_PARAMS.collateralToken,
-          MXNE_MARKET_PARAMS.oracle,
-          MXNE_MARKET_PARAMS.irm,
-          MXNE_MARKET_PARAMS.lltv,
-        ],
-        marketTuple,
-      );
+      const { borrowRate } = await fetchMarketBorrowRate(provider);
       const borrowRateDecimal = Number(borrowRate) / 1e18;
       const secondsPerYear = 60 * 60 * 24 * 365;
       const borrowApr = Math.exp(borrowRateDecimal * secondsPerYear) - 1;
@@ -99,7 +53,7 @@ export const useMorphoLoan = () => {
     } catch (err) {
       console.error("Error fetching market APR:", err);
     }
-  }, [getProvider]);
+  }, []);
 
   const refreshData = useCallback(async () => {
     try {
@@ -172,7 +126,7 @@ export const useMorphoLoan = () => {
     } catch (err) {
       console.error("Error refreshing data:", err);
     }
-  }, [wallets, getProvider, fetchMarketAPR]);
+  }, [wallets, fetchMarketAPR]);
 
   useEffect(() => {
     refreshData();
@@ -211,25 +165,6 @@ export const useMorphoLoan = () => {
       console.error("Error calculating deposit:", e);
       return "0";
     }
-  };
-
-  // ─── Helper: Wait for balance to increase (polling) ───────────────────────
-  const waitForBalanceIncrease = async (
-    tokenContract: ethers.Contract,
-    userAddress: string,
-    initialBalance: bigint,
-  ): Promise<bigint> => {
-    let retries = 0;
-    while (retries < 20) {
-      const currentBalance = await tokenContract.balanceOf(userAddress);
-      if (currentBalance > initialBalance) return currentBalance;
-      console.log(`Waiting for balance update... Attempt ${retries + 1}/20`);
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-      retries++;
-    }
-    throw new Error(
-      "RPC timeout: The network is slow indexing your new balance. Please wait a moment and try again.",
-    );
   };
 
   const waitForSubsidyIncrease = async (
@@ -383,6 +318,7 @@ export const useMorphoLoan = () => {
       setTxHash(borrowData.borrowHash);
       console.log("Borrow done:", borrowData);
 
+      await new Promise(r => setTimeout(r, 2000));
       setStep(8); // Success
       await refreshData();
       setLoading(false);
@@ -569,6 +505,7 @@ export const useMorphoLoan = () => {
         setUserInterestInUSDC(ethers.formatUnits(parseInt("" + paidUSDC), 18));
       }
 
+      await new Promise(r => setTimeout(r, 2000));
       await refreshData();
       setLoading(false);
     } catch (err: any) {

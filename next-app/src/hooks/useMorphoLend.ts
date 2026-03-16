@@ -1,109 +1,79 @@
-// src/hooks/useMorphoLend.ts
-import { useState, useEffect, useCallback } from "react";
-import { ethers } from "ethers";
-import { useWallets } from "@privy-io/react-auth";
-import { useWalletId } from "./useWalletId";
+import { useState, useEffect, useCallback } from 'react';
+import { ethers } from 'ethers';
+import { useWallets } from '@privy-io/react-auth';
 import {
-  BASE_SEPOLIA_CONFIG,
   CONTRACT_ADDRESSES,
   ERC20_ABI,
   VAULT_ABI,
-  MORPHO_ABI,
-  IRM_ABI,
-  MXNE_MARKET_PARAMS,
-  MARKET_IDS,
-} from "../constants/contracts";
+} from '../constants/contracts';
+import { useWalletId } from './useWalletId';
+import { formatBalance, getProvider, handleTransactionError, waitForBalanceIncrease, fetchMarketBorrowRate } from '../utils/web3Utils';
 
 const MXNE_DECIMALS = 6;
 
+// Extend VAULT_ABI to include totalAssets which was missing in the constants
 const EXTENDED_VAULT_ABI = [
   ...VAULT_ABI,
   "function totalAssets() external view returns (uint256)",
-  "function previewRedeem(uint256 shares) external view returns (uint256 assets)",
+  "function previewRedeem(uint256 shares) external view returns (uint256 assets)"
 ];
 
 export const useMorphoLend = () => {
   const { wallets } = useWallets();
-  const { walletId } = useWalletId(); // Server-side signing: dynamic walletId
+  const { walletId } = useWalletId();
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(0); // 0: Idle, 1...
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
+
+  // New states for success screen
   const [withdrawnAmount, setWithdrawnAmount] = useState<string | null>(null);
   const [yieldEarned, setYieldEarned] = useState<string | null>(null);
+
+  // Data States
   const [mxneBalance, setMxneBalance] = useState<string>("0.000");
   const [vaultSharesBalance, setVaultSharesBalance] = useState<string>("0.000");
   const [vaultAssetsBalance, setVaultAssetsBalance] = useState<string>("0.000");
   const [tvl, setTvl] = useState<string>("0.000");
   const [apy, setApy] = useState<number>(0);
+
+  // Market data states for APY calculation
   const [totalSupplied, setTotalSupplied] = useState<number>(0);
   const [totalBorrowed, setTotalBorrowed] = useState<number>(0);
 
-  const formatBalance = (val: bigint, decimals: number) => {
-    const formatted = ethers.formatUnits(val, decimals);
-    const [integer, fraction] = formatted.split(".");
-    if (!fraction) return integer;
-    return `${integer}.${fraction.substring(0, 1)}`;
-  };
-
-  // Read-only provider — no wallet signing needed for reads
-  const getProvider = useCallback(() => {
-    return new ethers.JsonRpcProvider(BASE_SEPOLIA_CONFIG.rpcUrl);
-  }, []);
-
+  // Fetch market details and borrow rate for APY calculation
   const fetchMarketData = useCallback(async () => {
     try {
-      if (!wallets.length) return;
       const provider = getProvider();
-      const morphoContract = new ethers.Contract(
-        CONTRACT_ADDRESSES.morphoBlue,
-        MORPHO_ABI,
-        provider,
-      );
-      const marketDetails = await morphoContract.market(MARKET_IDS.mxne);
-      const totalSupplyAssets = Number(
-        ethers.formatUnits(marketDetails.totalSupplyAssets, 6),
-      );
-      const totalBorrowAssets = Number(
-        ethers.formatUnits(marketDetails.totalBorrowAssets, 6),
-      );
+
+      const { totalSupplyAssets, totalBorrowAssets, borrowRate } = await fetchMarketBorrowRate(provider);
 
       setTotalSupplied(totalSupplyAssets);
       setTotalBorrowed(totalBorrowAssets);
 
-      const irmContract = new ethers.Contract(
-        MXNE_MARKET_PARAMS.irm,
-        IRM_ABI,
-        provider,
-      );
-      const marketTuple = [
-        marketDetails[0],
-        marketDetails[1],
-        marketDetails[2],
-        marketDetails[3],
-        marketDetails[4],
-        marketDetails[5],
-      ];
-      const borrowRate = await irmContract.borrowRateView(
-        [
-          MXNE_MARKET_PARAMS.loanToken,
-          MXNE_MARKET_PARAMS.collateralToken,
-          MXNE_MARKET_PARAMS.oracle,
-          MXNE_MARKET_PARAMS.irm,
-          MXNE_MARKET_PARAMS.lltv,
-        ],
-        marketTuple,
-      );
+      console.log("Market Details:", { totalSupplyAssets, totalBorrowAssets });
+      console.log("Borrow Rate (per second):", borrowRate.toString());
+
+      // Calculate APY
+      const feeRate = 0; // Fee rate in decimals
       const borrowRateDecimal = Number(borrowRate) / 1e18;
       const secondsPerYear = 60 * 60 * 24 * 365;
       const utilization = totalBorrowAssets / totalSupplyAssets;
       const borrowApy = Math.exp(borrowRateDecimal * secondsPerYear) - 1;
-      const supplyApy = borrowApy * utilization;
+      const supplyApy = borrowApy * utilization * (1 - feeRate);
+
       setApy(supplyApy);
+      console.log("APY Calculation:", {
+        borrowRate: borrowRateDecimal,
+        utilization,
+        borrowApy,
+        supplyApy,
+        supplyApyPercent: supplyApy * 100,
+      });
     } catch (err) {
       console.error("Error fetching market data:", err);
     }
-  }, [wallets, getProvider]);
+  }, []);
 
   const refreshData = useCallback(async () => {
     try {
@@ -112,23 +82,22 @@ export const useMorphoLend = () => {
       if (!userAddress) return;
 
       const provider = getProvider();
-      const mxneContract = new ethers.Contract(
-        CONTRACT_ADDRESSES.mockMXNE,
-        ERC20_ABI,
-        provider,
-      );
-      const vaultContract = new ethers.Contract(
-        CONTRACT_ADDRESSES.morphoMXNEVault,
-        EXTENDED_VAULT_ABI,
-        provider,
-      );
 
-      const [mxneBal, sharesBal, totalAssetsVal] = await Promise.all([
+      const mxneContract = new ethers.Contract(CONTRACT_ADDRESSES.mockMXNE, ERC20_ABI, provider);
+      const vaultContract = new ethers.Contract(CONTRACT_ADDRESSES.morphoMXNEVault, EXTENDED_VAULT_ABI, provider);
+
+      // Parallel reads
+      const [
+        mxneBal,
+        sharesBal,
+        totalAssetsVal
+      ] = await Promise.all([
         mxneContract.balanceOf(userAddress),
         vaultContract.balanceOf(userAddress),
-        vaultContract.totalAssets(),
+        vaultContract.totalAssets()
       ]);
 
+      // Derived reads
       let assetsBal = 0n;
       if (sharesBal > 0n) {
         assetsBal = await vaultContract.convertToAssets(sharesBal);
@@ -139,11 +108,12 @@ export const useMorphoLend = () => {
       setVaultAssetsBalance(formatBalance(assetsBal, MXNE_DECIMALS));
       setTvl(formatBalance(totalAssetsVal, MXNE_DECIMALS));
 
+      // Fetch market data for APY
       await fetchMarketData();
     } catch (err) {
       console.error("Error refreshing data:", err);
     }
-  }, [wallets, getProvider, fetchMarketData]);
+  }, [wallets, fetchMarketData]);
 
   useEffect(() => {
     refreshData();
@@ -151,6 +121,7 @@ export const useMorphoLend = () => {
     return () => clearInterval(interval);
   }, [refreshData]);
 
+  // Error Auto-Reset
   useEffect(() => {
     if (error) {
       const timer = setTimeout(() => {
@@ -161,27 +132,6 @@ export const useMorphoLend = () => {
       return () => clearTimeout(timer);
     }
   }, [error]);
-
-  // ─── Helper: Wait for balance to increase (polling) ───────────────────────
-  const waitForBalanceIncrease = async (
-    tokenContract: ethers.Contract,
-    userAddress: string,
-    initialBalance: bigint,
-  ): Promise<bigint> => {
-    let retries = 0;
-    while (retries < 20) {
-      const currentBalance = await tokenContract.balanceOf(userAddress);
-      if (currentBalance > initialBalance) return currentBalance;
-      console.log(`Waiting for balance update... Attempt ${retries + 1}/20`);
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-      retries++;
-    }
-    throw new Error(
-      "RPC timeout: The network is slow indexing your new balance. Please wait a moment and try again.",
-    );
-  };
-
-  // ─── SERVER-SIDE SIGNING ──────────────────────────────────────────────────
 
   const executeDeposit = async (amountMXNE: string) => {
     setLoading(true);
@@ -197,51 +147,46 @@ export const useMorphoLend = () => {
       }
 
       const provider = getProvider();
-      const vaultContract = new ethers.Contract(
-        CONTRACT_ADDRESSES.morphoMXNEVault,
-        EXTENDED_VAULT_ABI,
-        provider,
-      );
+      const vaultContract = new ethers.Contract(CONTRACT_ADDRESSES.morphoMXNEVault, EXTENDED_VAULT_ABI, provider);
 
-      // Read initial shares balance for polling
+      // Capture initial shares balance
       const initialShares = await vaultContract.balanceOf(userAddress);
 
-      // Step 1+2: Approve + Deposit via backend
+      // Step 2: Deposit via API
       setStep(2);
-      const res = await fetch("/api/lend-mxne", {
+      console.log("Step 2: Depositing MXNE via API");
+
+      const depositRes = await fetch("/api/lend-mxne", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ walletId, userAddress, amount: amountMXNE }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Deposit failed");
-      setTxHash(data.depositHash);
-      console.log("Deposit done:", data);
+      const depositData = await depositRes.json();
+      if (!depositRes.ok || depositData.error) throw new Error(depositData.error || "Deposit failed");
 
-      // Wait for shares balance to increase (polling)
+      setTxHash(depositData.depositHash);
+
+      // Step 3: Wait for balance increase
       setStep(3);
       await waitForBalanceIncrease(vaultContract, userAddress, initialShares);
 
-      setStep(4); // Success
+      // Success
+      setStep(4); // Success state
+      await new Promise(r => setTimeout(r, 2000));
       await refreshData();
       setLoading(false);
+
     } catch (err: any) {
       console.error("Deposit Error:", err);
-      let msg = err.message ?? "Deposit failed";
-      if (msg.includes("rejected")) msg = "You rejected the transaction";
-      else msg = "The transaction failed. Please try again.";
-      setError(msg);
+      setError(handleTransactionError(err));
       setLoading(false);
     }
   };
 
-  const executeWithdraw = async (
-    sharesAmount: string | bigint,
-    withdrawAll: boolean = false,
-  ) => {
+  const executeWithdraw = async (sharesAmount: string | bigint, withdrawAll: boolean = false) => {
     setLoading(true);
     setError(null);
-    setStep(11);
+    setStep(11); // Start withdrawal flow
     setWithdrawnAmount(null);
     setYieldEarned(null);
 
@@ -254,53 +199,48 @@ export const useMorphoLend = () => {
       }
 
       const provider = getProvider();
-      const vaultContract = new ethers.Contract(
-        CONTRACT_ADDRESSES.morphoMXNEVault,
-        EXTENDED_VAULT_ABI,
-        provider,
-      );
+      const vaultContract = new ethers.Contract(CONTRACT_ADDRESSES.morphoMXNEVault, EXTENDED_VAULT_ABI, provider);
 
       let sharesToRedeem: bigint;
+
       if (withdrawAll) {
         sharesToRedeem = await vaultContract.balanceOf(userAddress);
       } else {
-        sharesToRedeem =
-          typeof sharesAmount === "string"
-            ? ethers.parseUnits(sharesAmount, 6)
-            : sharesAmount;
+        if (typeof sharesAmount === 'string') {
+          sharesToRedeem = ethers.parseUnits(sharesAmount, 6);
+        } else {
+          sharesToRedeem = sharesAmount;
+        }
       }
 
       if (sharesToRedeem === 0n) throw new Error("No shares to withdraw.");
 
-      // Preview redeem amount
+      console.log("Withdrawing shares:", sharesToRedeem.toString());
+
+      // Preview redeem to get exact output amount
       const expectedAssets = await vaultContract.previewRedeem(sharesToRedeem);
       setWithdrawnAmount(ethers.formatUnits(expectedAssets, MXNE_DECIMALS));
 
-      console.log("Withdrawing shares:", sharesToRedeem.toString());
-
-      const res = await fetch("/api/withdraw-mxne", {
+      // Step 1 (11): Redeem via API
+      const redeemRes = await fetch("/api/withdraw-mxne", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          walletId,
-          userAddress,
-          musdcShares: sharesToRedeem.toString(),
-        }),
+        body: JSON.stringify({ walletId, userAddress, musdcShares: sharesToRedeem.toString() })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Withdraw failed");
-      setTxHash(data.redeemHash);
-      console.log("Withdraw done:", data);
+      const redeemData = await redeemRes.json();
+      if (!redeemRes.ok || redeemData.error) throw new Error(redeemData.error || "Withdraw failed");
 
-      setStep(12); // Success
+      setTxHash(redeemData.redeemHash);
+
+      // Success
+      setStep(12); // Withdrawal Success
+      await new Promise(r => setTimeout(r, 2000));
       await refreshData();
       setLoading(false);
+
     } catch (err: any) {
       console.error("Withdraw Error:", err);
-      let msg = err.message ?? "Withdraw failed";
-      if (msg.includes("rejected")) msg = "You rejected the transaction";
-      else msg = "The transaction failed. Please try again.";
-      setError(msg);
+      setError(handleTransactionError(err));
       setLoading(false);
     }
   };
@@ -323,12 +263,14 @@ export const useMorphoLend = () => {
     vaultSharesBalance,
     vaultAssetsBalance,
     tvl,
-    apy: (apy * 100).toFixed(2),
+    apy: (apy * 100).toFixed(2), // Return as percentage string for display
     withdrawnAmount,
     yieldEarned,
+    totalSupplied,
+    totalBorrowed,
     executeDeposit,
     executeWithdraw,
     refreshData,
-    resetState,
+    resetState
   };
 };

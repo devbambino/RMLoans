@@ -1,20 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useMorphoLend } from "../hooks/useMorphoLend";
 import { usePrivy } from "@privy-io/react-auth";
 import {
-    CheckCircleIcon,
-    ArrowPathIcon,
     BanknotesIcon,
     ChartBarIcon,
     CircleStackIcon,
     WalletIcon,
-    CurrencyDollarIcon
 } from "@heroicons/react/24/outline";
-import BalancesGrid, { BalanceItem } from "./BalancesGrid";
-import Input from "./Input";
 import Button from "./Button";
+import BalancesGrid from "./BalancesGrid";
+import Input from "./Input";
+import AppCard from "./AppCard";
+import ErrorDisplay from "./ErrorDisplay";
+import SuccessScreen from "./SuccessScreen";
+import ProgressStepper from "./ProgressStepper";
 
 export default function RendimientoRapido() {
     const { authenticated, login } = usePrivy();
@@ -27,10 +28,8 @@ export default function RendimientoRapido() {
         tvl,
         apy,
         withdrawnAmount,
-        yieldEarned,
         executeDeposit,
         executeWithdraw,
-        refreshData,
         resetState
     } = useMorphoLend();
 
@@ -63,174 +62,137 @@ export default function RendimientoRapido() {
     };
 
     // Derived states
-    const hasLiquidity = parseFloat(vaultAssetsBalance) > 0;
-    const isInsufficientBalance = depositAmount && parseFloat(depositAmount) > parseFloat(mxneBalance);
+    const hasLiquidity = useMemo(() => {
+        return parseFloat(vaultAssetsBalance) > 0;
+    }, [vaultAssetsBalance]);
 
-    const balanceRows: BalanceItem[][] = [
-        [
-            { label: "Your Pesos", value: `${mxneBalance} MXNe`, icon: WalletIcon, highlightValue: true },
-            { label: "Your Deposits", value: `${vaultAssetsBalance} MXNe`, icon: CircleStackIcon }
-        ],
+    const isInsufficientBalance = useMemo(() => {
+        return Boolean(depositAmount) && parseFloat(depositAmount) > parseFloat(mxneBalance);
+    }, [depositAmount, mxneBalance]);
 
-        [
-            { label: "APY", value: `${apy}%`, icon: ChartBarIcon },
-            { label: "TVL", value: `${tvl} MXNe`, icon: BanknotesIcon }
-        ]
-    ];
+    const isDepositDisabled = useMemo(() => {
+        return loading || !depositAmount || parseFloat(depositAmount) <= 0 || isInsufficientBalance;
+    }, [loading, depositAmount, isInsufficientBalance]);
 
     return (
-        <div className="w-full max-w-md mx-auto p-1">
-            <div className="relative overflow-hidden rounded-2xl bg-[#0a0a0a] border border-[#264c73] shadow-2xl backdrop-blur-xl">
-                {/* Header Background Gradient */}
-                <div className="absolute top-0 left-0 w-full h-28 pointer-events-none" />
-
-                <div className="relative p-6 sm:p-8">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h2 className="text-2xl w-fit mb-2 border-b-4 border-[#264c73] font-bold text-white">
-                                MXNe Yield
-                            </h2>
-                            <p className="text-sm font-bold text-[#4fe3c3] mt-1">Provide liquidity and earn interest</p>
-                        </div>
-                        <div className="p-3 rounded-full bg-[#0a0a0a] border border-[#264c73]">
-                            <ChartBarIcon className="w-6 h-6 text-[#4fe3c3]" />
-                        </div>
-                    </div>
-
-                    {!authenticated ? (
-                        <div className="text-center py-12">
-                            <p className="text-gray-200 mb-6">Sign In/Up to get started</p>
-                            <Button onClick={login}>
-                                Sign In/Up
-                            </Button>
-                        </div>
-                    ) : (
-                        <>
-                            {/* Balances Grid */}
-                            <BalancesGrid rows={balanceRows} columns={2} className="mb-6 mt-14" />
-
-                            {/* Main Content Area */}
-                            {step === 4 && !loading ? (
-                                /* Success Screen (Deposit) */
-                                <div className="py-8 text-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
-                                    <div className="w-20 h-20 bg-[#0a0a0a] rounded-full flex items-center justify-center mx-auto border border-[#4fe3c3]">
-                                        <CheckCircleIcon className="w-10 h-10 text-[#4fe3c3]" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-2xl font-bold text-white mb-2">Deposit Successful!</h3>
-                                        <p className="text-gray-200">
-                                            Your liquidity has been successfully added.
-                                        </p>
-                                    </div>
-
-                                    <Button
-                                        onClick={handleReset}
-                                        className="transform hover:-translate-y-1"
-                                    >
-                                        Make Another Deposit
-                                    </Button>
-                                </div>
-                            ) : step === 12 && !loading ? (
-                                /* Success Screen (Withdrawal) */
-                                <div className="py-8 text-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
-                                    <div className="w-20 h-20 bg-[#0a0a0a] rounded-full flex items-center justify-center mx-auto border border-[#4fe3c3]">
-                                        <CheckCircleIcon className="w-10 h-10 text-[#4fe3c3]" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-2xl font-bold text-white mb-2">Withdrawal Successful!</h3>
-                                        <div className="text-sm bg-[#0a0a0a] border border-[#264c73] p-4 rounded-lg space-y-2 text-left">
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-200">Total Withdrawn:</span>
-                                                <span className="text-white font-mono">{withdrawnAmount} MXNe</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <Button
-                                        onClick={handleReset}
-                                        className="transform hover:-translate-y-1"
-                                    >
-                                        Back to Home
-                                    </Button>
-                                </div>
-                            ) : (
-                                /* Input Section */
-                                <div className="space-y-6 py-2">
-                                    {!loading && (
-                                        <Input
-                                            label="How much MXNe do you want to deposit?"
-                                            symbol="MXNE"
-                                            value={depositAmount}
-                                            onChange={(e) => setDepositAmount(e.target.value)}
-                                            onMaxClick={() => setDepositAmount(mxneBalance)}
-                                            errorMessage={isInsufficientBalance ? "Insufficient balance" : null}
-                                        />
-                                    )}
-
-                                    {/* Progress Stepper */}
-                                    {loading && (
-                                        <div className="space-y-3 py-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                            <div className="flex justify-between text-xs text-gray-200 uppercase tracking-widest mb-1">
-                                                <span>
-                                                    {step >= 11 ? "Processing Withdrawal..." : "Processing Deposit..."}
-                                                </span>
-                                                <span>
-                                                    {step >= 11 ? "1 / 1" : `${Math.min(step, 3)} / 3`}
-                                                </span>
-                                            </div>
-                                            <div className="h-2 w-full bg-[#264c73] rounded-full overflow-hidden">
-                                                {step >= 11 ? (
-                                                    <div
-                                                        className="h-full bg-[#4fe3c3] transition-all duration-500 ease-out animate-pulse"
-                                                        style={{ width: "100%" }}
-                                                    />
-                                                ) : (
-                                                    <div
-                                                        className="h-full bg-[#4fe3c3] transition-all duration-500 ease-out"
-                                                        style={{ width: `${(step / 3) * 100}%` }}
-                                                    />
-                                                )}
-                                            </div>
-                                            <p className={`text-center text-sm font-medium animate-pulse text-[#4fe3c3]`}>
-                                                {getStepLabel(step)}
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {/* Error Message */}
-                                    {error && (
-                                        <div className="p-4 text-center rounded-xl bg-[#0a0a0a] border border-[#264c73] text-[#4fe3c3] text-sm">
-                                            <p className="font-semibold text-center mb-1"> An error occurred while depositing </p>
-                                            {error}
-                                        </div>
-                                    )}
-
-                                    {/* Deposit Button */}
-                                    {!loading && (
-                                        <Button
-                                            onClick={handleDeposit}
-                                            disabled={!depositAmount || parseFloat(depositAmount) <= 0 || isInsufficientBalance}
-                                        >
-                                            Deposit MXNe
-                                        </Button>
-                                    )}
-
-                                    {/* Withdraw Button */}
-                                    {hasLiquidity && !loading && (
-                                        <Button
-                                            isWithdraw
-                                            onClick={handleWithdrawAll}
-                                            className="mt-2"
-                                        >
-                                            Withdraw All
-                                        </Button>
-                                    )}
-                                </div>
-                            )}
-                        </>
-                    )}
+        <AppCard>
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h2 className="text-2xl w-fit mb-2 border-b-4 border-[#264c73] font-bold text-white">
+                        MXNe Yield
+                    </h2>
+                    <p className="text-sm font-bold text-[#4fe3c3] mt-1">Provide liquidity and earn interest</p>
+                </div>
+                <div className="p-3 rounded-full bg-[#0a0a0a] border border-[#264c73]">
+                    <ChartBarIcon className="w-6 h-6 text-[#4fe3c3]" />
                 </div>
             </div>
-        </div>
+
+            {!authenticated ? (
+                <div className="text-center pt-12">
+                    <p className="text-gray-200 mb-6">Sign In/Up to get started</p>
+                    <Button
+                        onClick={login}
+                    >
+                        Sign In/Up
+                    </Button>
+                </div>
+            ) : (
+                <>
+                    <BalancesGrid
+                        columns={2}
+                        className="mb-3 mt-3"
+                        rows={[
+                            [
+                                { label: "Your Pesos", value: `${mxneBalance} MXNE`, icon: WalletIcon, highlightValue: true },
+                                { label: "Your Deposits", value: `${vaultAssetsBalance} MXNE`, icon: CircleStackIcon }
+                            ],
+
+                            [
+                                { label: "APY", value: `${apy}%`, icon: ChartBarIcon },
+                                { label: "TVL", value: `${tvl} MXNE`, icon: BanknotesIcon }
+                            ]
+                        ]}
+                    />
+                    {/* Main Content Area */}
+                    {step === 4 && !loading ? (
+                        /* Success Screen (Deposit) */
+                        <SuccessScreen
+                            title="Deposit Successful!"
+                            buttonText="Make Another Deposit"
+                            onButtonClick={handleReset}
+                        >
+                            <p className="text-gray-200">
+                                Your liquidity has been successfully added.
+                            </p>
+                        </SuccessScreen>
+                    ) : step === 12 && !loading ? (
+                        /* Success Screen (Withdrawal) */
+                        <SuccessScreen
+                            title="Withdrawal Successful!"
+                            buttonText="Back to Home"
+                            onButtonClick={handleReset}
+                        >
+                            <div className="text-sm bg-[#0a0a0a] border border-[#264c73] p-4 rounded-lg space-y-2 text-left">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-200">Total Withdrawn:</span>
+                                    <span className="text-[#4fe3c3] font-mono">{withdrawnAmount} MXNe</span>
+                                </div>
+                            </div>
+                        </SuccessScreen>
+                    ) : (
+                        /* Input Section */
+                        <div className="space-y-6 py-2">
+                            {!loading && (
+                                /* Input */
+                                <Input
+                                    label="How much MXNe do you want to deposit?"
+                                    symbol="MXNE"
+                                    value={depositAmount}
+                                    onChange={(e) => setDepositAmount(e.target.value)}
+                                    onMaxClick={() => setDepositAmount(mxneBalance)}
+                                    errorMessage={isInsufficientBalance && "Insufficient balance"}
+                                    disabled={loading}
+                                />
+                            )}
+
+                            {/* Progress Stepper */}
+                            {loading && (
+                                <ProgressStepper
+                                    title={step >= 11 ? "Processing Withdrawal..." : "Processing Deposit..."}
+                                    currentStep={step >= 11 ? 1 : step}
+                                    totalSteps={step >= 11 ? 1 : 3}
+                                    stepLabel={getStepLabel(step)}
+                                />
+                            )}
+
+                            {/* Error Message */}
+                            <ErrorDisplay error={error} />
+
+                            {/* Deposit Button */}
+                            {!loading && (
+                                <Button
+                                    onClick={handleDeposit}
+                                    disabled={isDepositDisabled}
+                                >
+                                    Deposit MXNe
+                                </Button>
+                            )}
+
+                            {/* Withdraw Button */}
+                            {hasLiquidity && !loading && (
+                                <Button
+                                    onClick={handleWithdrawAll}
+                                    isWithdraw
+                                    className="mt-2"
+                                >
+                                    Withdraw All
+                                </Button>
+                            )}
+                        </div>
+                    )}
+                </>
+            )}
+        </AppCard>
     );
 }
