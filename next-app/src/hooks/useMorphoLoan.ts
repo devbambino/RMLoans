@@ -29,8 +29,10 @@ export const useMorphoLoan = () => {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<string>("0.00");
   const [mxneBalance, setMxneBalance] = useState<string>("0.00");
+  const [rawMxneBalance, setRawMxneBalance] = useState<number>(0);
   const [collateralBalance, setCollateralBalance] = useState<string>("0.00");
   const [borrowBalance, setBorrowBalance] = useState<string>("0.00");
+  const [rawBorrowBalance, setRawBorrowBalance] = useState<number>(0);
   const [marketLiquidity, setMarketLiquidity] = useState<string>("0");
   const [marketAPR, setMarketAPR] = useState<number>(0);
   const [totalRepaidAmount, setTotalRepaidAmount] = useState<string | null>(
@@ -84,6 +86,7 @@ export const useMorphoLoan = () => {
       ]);
       setUsdcBalance(formatBalance(usdcBal, USDC_DECIMALS));
       setMxneBalance(formatBalance(mxneBal, MXNE_DECIMALS));
+      setRawMxneBalance(Number(mxneBal));
 
       const marketId = ethers.keccak256(
         ethers.AbiCoder.defaultAbiCoder().encode(
@@ -111,6 +114,9 @@ export const useMorphoLoan = () => {
           : 0n;
 
       setBorrowBalance(formatBalance(position[1], 12));
+      setRawBorrowBalance(Number(formatBalance(position[1], 6)));
+      //console.log("raw borrowBalance:",position[1], " raw mxnbebal:", mxneBal);
+      //console.log("raw borrowBalance Numbered:",Number(formatBalance(position[1], 6)), " raw mxnbbal:", Number(mxneBal));
       setCollateralBalance(formatBalance(position[2], 18));
       setMarketLiquidity(formatBalance(liquidityAssets, MXNE_DECIMALS));
 
@@ -534,8 +540,10 @@ export const useMorphoLoan = () => {
     txHash,
     usdcBalance,
     mxneBalance,
+    rawMxneBalance,
     collateralBalance,
     borrowBalance,
+    rawBorrowBalance,
     marketLiquidity,
     marketAPR: (marketAPR * 100).toFixed(2),
     totalRepaidAmount,

@@ -14,7 +14,7 @@ import SuccessScreen from "./SuccessScreen";
 
 export default function PrestamoRapido() {
     const { authenticated, login } = usePrivy();
-    const { loading, step, error, txHash, usdcBalance, mxneBalance, collateralBalance, borrowBalance, marketLiquidity, marketAPR, totalRepaidAmount, userPaidSubsidyInUSDC, userInterestInMxne, userInterestInUSDC, executeZale, executeRepayAndWithdraw, getSimulatedDeposit, resetState } = useMorphoLoan();
+    const { loading, step, error, txHash, usdcBalance, mxneBalance, rawMxneBalance, collateralBalance, borrowBalance, rawBorrowBalance, marketLiquidity, marketAPR, totalRepaidAmount, userPaidSubsidyInUSDC, userInterestInMxne, userInterestInUSDC, executeZale, executeRepayAndWithdraw, getSimulatedDeposit, resetState } = useMorphoLoan();
 
     const [borrowAmount, setBorrowAmount] = useState("");
     const [requiredDeposit, setRequiredDeposit] = useState("0.00");
@@ -59,7 +59,7 @@ export default function PrestamoRapido() {
     const isExceedingLiquidity = Boolean(borrowAmount && parseFloat(borrowAmount) > parseFloat(marketLiquidity));
     const isInsufficientBalance = parseFloat(usdcBalance) < parseFloat(requiredDeposit || "0");
     const isInsufficientBalanceWithdraw = useMemo(() => {
-        return mxneBalance <= borrowBalance;
+        return rawMxneBalance <= rawBorrowBalance;
     }, [mxneBalance, borrowBalance]);
     const balanceRows: BalanceItem[][] = [
         [
@@ -124,7 +124,7 @@ export default function PrestamoRapido() {
                         rows={[
                             [
                                 { label: "Rate (APR)", value: `${marketAPR}%`, icon: ChartBarIcon },
-                                { label: "Available", value: `${marketLiquidity} MXNe`, icon: CircleStackIcon }
+                                { label: "To Borrow", value: `${marketLiquidity} MXNe`, icon: CircleStackIcon }
                             ]
                         ]}
                     />
